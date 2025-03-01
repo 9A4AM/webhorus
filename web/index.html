@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.27.3/full/pyodide.js"></script>
+    <link href="bootstrap-5.3.3-dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="plotly-3.0.0.min.js" charset="utf-8"></script>
+</head>
+
+<body>
+    <header>
+
+    </header>
+
+    <!-- Begin page content -->
+    <main role="main" class="container gap-4 d-grid ">
+        <div class="row">
+            <h1 class="mt-5">webhorus
+            </h1>
+            <div class="row">
+                <div class="col-6 g-3 align-items-center  align-items-center justify-content-center ">
+                    <div class="row">
+                        <div class="col-3 mb-3">
+                            <label class="form-label col-form-label" for="callsign">Uploader Callsign:</label>
+                        </div>
+                        <div class="col-4 mb-3">
+                            <input class="form-control" id="callsign" oninput="refresh_input()" placeholder=""
+                                value="N0CALL">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-3 mb-3">
+                            <label class="form-label col-form-label" for="uploader_radio">Uploader Radio:</label>
+                        </div>
+                        <div class="col-4 mb-3">
+                            <input class="form-control" id="uploader_radio" oninput="refresh_input()" placeholder="">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-3 mb-3">
+                            <label class="form-label col-form-label" for="uploader_antenna">Uploader Antenna:</label>
+                        </div>
+                        <div class="col-4 mb-3">
+                            <input class="form-control" id="uploader_antenna" oninput="refresh_input()" placeholder="">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-3 mb-3">
+                            <label class="form-label col-form-label" for="sound_adapter">Sound input:</label>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <select class="form-control form-select" id="sound_adapter" onchange="snd_change()" placeholder="" disabled>
+                                <option selected id="snd_ph">Click start first</option>    
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 g-3 align-items-center  align-items-center justify-content-center ">
+                    <div class="row">
+                        <div class="col-3 mb-3">
+                            <label class="form-label col-form-label" for="uploader_lat">Uploader Latitude:</label>
+                        </div>
+                        <div class="col-4 mb-3">
+                            <input class="form-control" id="uploader_lat" oninput="refresh_input()" placeholder="">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-3 mb-3">
+                            <label class="form-label col-form-label" for="uploader_lon">Uploader Longitude:</label>
+                        </div>
+                        <div class="col-4 mb-3">
+                            <input class="form-control" id="uploader_lon" oninput="refresh_input()" placeholder="">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-3 mb-3">
+                            <label class="form-label col-form-label" for="uploader_alt">Uploader Altitude:</label>
+                        </div>
+                        <div class="col-4 mb-3">
+                            <input class="form-control" id="uploader_alt" oninput="refresh_input()" placeholder="">
+                        </div>
+                    </div>
+                    <div class="row align-middle">
+                        <div class="col-3 mb-3">
+                            <label class="form-label col-form-label" for="uploader_position">Uploader position:</label>
+                        </div>
+                        <div class="col-4 mb-3  align-middle">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input form-control" type="checkbox" id="uploader_position"
+                                oninput="refresh_input()" onclick="refresh_input()" placeholder="">
+                            </div>
+                        </div>
+                    </div>
+                   
+                </div>
+                <div class="row">
+                    <div class="col-auto mb-3">
+                        <button id="audio_start" class="btn btn-primary" onclick="startAudio()"
+                            disabled="true">Loading</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- <p><span class="badge rounded-pill bg-secondary" id="status">???</span></p> -->
+            <p>
+
+
+            </p>
+        </div>
+        <div class="row g-3">
+            <h2>SNR</h2>
+            <div id="snr" width="80%" height="10">
+            </div>
+        </div>
+        <div class="row g-3">
+            <h2>RX Log</h2>
+            <p>Logs!</p>
+            <div id="rx_log">
+
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <span class="text-muted"></span>
+        </div>
+    </footer>
+    <script src="bootstrap-5.3.3-dist/js/bootstrap.bundle.min.js"></script>
+    <script src="wasm.js"></script>
+</body>
+
+</html>

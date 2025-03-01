@@ -1,0 +1,3 @@
+[submodule "horusdemodlib"]
+	path = horusdemodlib
+	url = git@github.com:projecthorus/horusdemodlib.git

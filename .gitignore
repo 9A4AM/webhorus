@@ -1,0 +1,6 @@
+__pycache__
+.pyodide*
+build
+dist
+emsdk
+.DS_Store
