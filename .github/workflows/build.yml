@@ -16,16 +16,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 23.x
-      - name: Run install
-        uses: borales/actions-yarn@v4
-        with:
-          cmd: install
-          dir: web
-      - name: Run install
-        uses: borales/actions-yarn@v4
-        with:
-          cmd: build
-          dir: web
+      - name: enable corepack
+        run: corepack enable
       - run: |
           apt-get update
           pip install pyodide-build
@@ -38,6 +30,11 @@ jobs:
           cd ..
           pyodide build --outdir web/
         shell: bash
+      - name: Yarn
+        run: |
+          cd web
+          yarn install
+          yarn build
       - name: 'Upload Artifact'
         uses: actions/upload-artifact@v4
         with:
