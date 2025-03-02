@@ -4,3 +4,6 @@ build
 dist
 emsdk
 .DS_Store
+payload_id_list.txt
+custom_field_list.json
+web/webhorus-*

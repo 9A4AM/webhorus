@@ -122,7 +122,7 @@ async function main() {
     await pyodide.loadPackage("micropip")
     await pyodide.loadPackage("cffi")
     const micropip = pyodide.pyimport("micropip");
-    await micropip.install("https://horus.sondehub.org/webhorus-0.1.0-cp312-cp312-pyodide_2024_0_wasm32.whl");
+    await micropip.install("file:///webhorus-0.1.0-cp312-cp312-pyodide_2024_0_wasm32.whl");
     await console.log(pyodide.runPython(`
     import struct
     from pyodide.ffi import to_js
@@ -151,23 +151,19 @@ async function main() {
         sh.user_antenna=antenna
 
     def write_audio(data):
-      global buffer
       data = data.to_py(depth=1)
       data = struct.pack('h'*len(data),*data)
-      buffer = buffer + data
-      
-      if len(buffer) > horus_demod.nin*2:
-        audio_in = buffer[:horus_demod.nin*2]
-        buffer = buffer[horus_demod.nin*2:]
-        frame = horus_demod.demodulate(audio_in)
-        updateSNR(horus_demod.modem_stats['snr_est'])
-        if frame and frame.crc_pass:
-            packet = decode_packet(frame.data)
-            sh_format =  sh.reformat_data(packet)
-            rx_packet(packet,sh_format)
-        
+      frame = horus_demod.demodulate(data)
+      #print(horus_demod.modem_stats)
+      #print(horus_demod.modem_stats['snr_est'])
+      updateSNR(horus_demod.modem_stats['snr_est'])
+      if frame and frame.crc_pass:
+          packet = decode_packet(frame.data)
+          sh_format =  sh.reformat_data(packet)
+          rx_packet(packet,sh_format)
+      return to_js(horus_demod.nin)
 `));
-
+    nin =  await pyodide.runPython("to_js(horus_demod.nin)")
     write_audio = await pyodide.runPython("write_audio")
     update_uploader = await pyodide.runPython("update_uploader")
     refresh_input();
@@ -184,23 +180,32 @@ function snd_change(){
     stop_microphone();
     var constraint = {
         "audio": {
-                "deviceId": {"exact": document.getElementById("sound_adapter").value}
+                "deviceId": {"exact": document.getElementById("sound_adapter").value},
+                echoCancellation: {"exact": false},
+                autoGainControl: {"exact": false},
+                noiseSuppression: {"exact": false}
             }
         }
     startAudio(constraint)
 }
 
 var microphone_stream = null
+var audio_buffer = []
+
+var audioContext = new AudioContext({ sampleRate: 48000 });
+audioContext.audioWorklet.addModule('audio.js');
 
 function startAudio(constraint) {
 
-    audioContext = new AudioContext({ sampleRate: 48000 });
-    audioContext.audioWorklet.addModule('audio.js');
 
     console.log("audio is starting up ...");
 
     if (constraint == undefined){
-        var audio_constraint = { audio: true }
+        var audio_constraint = { audio: true, 
+          echoCancellation: {"exact": false},
+          autoGainControl: {"exact": false},
+          noiseSuppression: {"exact": false}
+        }
     } else {
         var audio_constraint = constraint
     }
@@ -231,6 +236,16 @@ function startAudio(constraint) {
     })
 
 
+    function on_audio(data){
+      audio_buffer = audio_buffer.concat(data)
+        if (audio_buffer.length > nin ){
+          var to_modem = audio_buffer.splice(0,nin)
+          nin = write_audio(to_modem)
+        }
+        
+    }
+        
+
 
     function start_microphone(stream) {
         try {
@@ -248,8 +263,9 @@ function startAudio(constraint) {
         horusNode = new AudioWorkletNode(audioContext, 'horus');
         microphone_stream.connect(horusNode);
         horusNode.port.onmessage = (e) => {
-            write_audio(e.data)
+          on_audio(e.data)
         }
+        audioContext.resume()
 
 
     }

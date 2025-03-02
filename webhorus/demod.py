@@ -284,8 +284,10 @@ if __name__ == "__main__":
         with open(args.filename, "rb") as f:
             while audio_in := f.read(demod.nin*2):
                data = demod.demodulate(audio_in)
+               print(demod.modem_stats['snr_est'])
                if data and data.crc_pass:
                    packet = horusdemodlib.decoder.decode_packet(
                        data.data
                    )
+                   
                    print(sh.reformat_data(packet))

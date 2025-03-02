@@ -28,7 +28,7 @@ requests = "^2.32.3"
 
 [tool.poetry.group.dev.dependencies]
 setuptools = "^75.8.2"
-cffi = "^1.17.1"
+cffi = "1.17.1"
 
 
 [build-system]
