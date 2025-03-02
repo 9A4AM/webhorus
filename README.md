@@ -17,6 +17,7 @@ pyodide build --outdir web/
 
 
 ### TODO
+- refactor for the new reformat_data from sh
 - github actions builds
 - include pyoxide in artefact
 - js depend manager?
@@ -27,3 +28,7 @@ pyodide build --outdir web/
 - upload enable / disable needs to be added
 - station position reports
 - map picker for location + geolocate if available
+- soft axis labels
+- time on the axis
+- vertical axis needs to be wider
+- add dbfs gauge
