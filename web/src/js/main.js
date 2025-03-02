@@ -127,7 +127,7 @@ function refresh_input(){
     },3000);
 }
 
-globalThis.refresh_input_timer = refresh_input_timer
+globalThis.refresh_input = refresh_input
 
 globalThis.rx_packet = rx_packet
 globalThis.updateSNR = updateSNR
