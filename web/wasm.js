@@ -123,7 +123,7 @@ async function main() {
     await pyodide.loadPackage("cffi")
     const micropip = pyodide.pyimport("micropip");
     await micropip.install("file:///webhorus-0.1.0-cp312-cp312-pyodide_2024_0_wasm32.whl");
-    await console.log(pyodide.runPython(`
+    await pyodide.runPython(`
     import struct
     from pyodide.ffi import to_js
     from pyodide.ffi import create_proxy
@@ -162,7 +162,7 @@ async function main() {
           sh_format =  sh.reformat_data(packet)
           rx_packet(packet,sh_format)
       return to_js(horus_demod.nin)
-`));
+`);
     nin =  await pyodide.runPython("to_js(horus_demod.nin)")
     write_audio = await pyodide.runPython("write_audio")
     update_uploader = await pyodide.runPython("update_uploader")
@@ -172,18 +172,29 @@ async function main() {
 }
 main();
 
+async function add_constraints(constraint){
+  const stream = await navigator.mediaDevices.getUserMedia(constraint)
+  const supported_constraints = await stream.getTracks()[0].getCapabilities()
+  const wanted = ["echoCancellation", "autoGainControl", "noiseSuppression"]
+  for (x of wanted){
+    
+    if (x in supported_constraints){
+      constraint.audio[x] = {"ideal": false}
+    }
+  }
+  constraint.audio.deviceId = supported_constraints.deviceId
+  
+  return constraint
+}
 
 
-
-function snd_change(){
+async function snd_change(){
     console.log("changing sound device")
     stop_microphone();
     var constraint = {
         "audio": {
                 "deviceId": {"exact": document.getElementById("sound_adapter").value},
-                echoCancellation: {"exact": false},
-                autoGainControl: {"exact": false},
-                noiseSuppression: {"exact": false}
+                
             }
         }
     startAudio(constraint)
@@ -192,28 +203,26 @@ function snd_change(){
 var microphone_stream = null
 var audio_buffer = []
 
-var audioContext = new AudioContext({ sampleRate: 48000 });
-audioContext.audioWorklet.addModule('audio.js');
-
-function startAudio(constraint) {
 
 
+async function startAudio(constraint) {
+
+    audioContext = new AudioContext({ sampleRate: 48000 });
+    await audioContext.audioWorklet.addModule('audio.js')
     console.log("audio is starting up ...");
 
     if (constraint == undefined){
-        var audio_constraint = { audio: true, 
-          echoCancellation: {"exact": false},
-          autoGainControl: {"exact": false},
-          noiseSuppression: {"exact": false}
-        }
+        var audio_constraint = { audio: {} }
     } else {
         var audio_constraint = constraint
     }
-
+    const audio_constraint_filters = await add_constraints(audio_constraint)
+    console.log(audio_constraint_filters.audio.deviceId)
     
-
-    navigator.mediaDevices.getUserMedia(audio_constraint).then((stream) =>
+    console.log(document.getElementById("sound_adapter"))
+    navigator.mediaDevices.getUserMedia(audio_constraint_filters).then((stream) =>
     {
+        console.log(audio_constraint_filters)
         if (constraint == undefined){
             navigator.mediaDevices.enumerateDevices().then(devices => {
                 document.getElementById("sound_adapter").removeAttribute("disabled")
@@ -226,9 +235,11 @@ function startAudio(constraint) {
                         document.getElementById("sound_adapter").appendChild(snd_opt)
                     }
                 }
-                console.log(devices)
+                document.getElementById("sound_adapter").value=audio_constraint_filters.audio.deviceId
             })
         }
+        document.getElementById("sound_adapter").value=audio_constraint_filters.audio.deviceId
+        
         start_microphone(stream);
         document.getElementById("audio_start").setAttribute("disabled","disabled");
         document.getElementById("audio_start").classList.add("btn-outline-success")
