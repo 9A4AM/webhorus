@@ -2,9 +2,8 @@ import _horus_api_cffi
 import argparse
 import datetime
 import horusdemodlib.payloads
-
-
 import horusdemodlib.decoder
+import horusdemodlib.utils
 
 horusdemodlib.decoder.horusdemodlib.payloads.HORUS_PAYLOAD_LIST = horusdemodlib.payloads.init_payload_id_list()
 horusdemodlib.decoder.horusdemodlib.payloads.HORUS_CUSTOM_FIELDS = horusdemodlib.payloads.init_custom_field_list()
@@ -144,141 +143,12 @@ class Demod():
                 stats=self.modem_stats
             )
 
-# it was easier to copy this out and modify than to import
-class SondehubUploader():
-
-    def __init__(self,user_callsign="NOCALL", user_position=[0,0,0], user_radio="", user_antenna=""):
-        self.software_name = "webhorus"
-        self.software_version = "0.0.1" #TODO
-        self.user_callsign = user_callsign
-        self.user_position = user_position
-        self.user_radio = user_radio
-        self.user_antenna = user_antenna
-
-
-    def log_error(self,msg):
-        print(msg)
-    log_warning  = log_error
-    log_info = log_error
-
-    def reformat_data(self, telemetry):
-        """ Take an input dictionary and convert it to the universal format """
-
-        # Init output dictionary
-        _output = {
-            "software_name": self.software_name,
-            "software_version": self.software_version,
-            "uploader_callsign": self.user_callsign,
-            "uploader_position": self.user_position,
-            "uploader_radio": self.user_radio,
-            "uploader_antenna": self.user_antenna,
-            "time_received": datetime.datetime.utcnow().strftime(
-                "%Y-%m-%dT%H:%M:%S.%fZ"
-            ),
-        }
-
-        # Mandatory Fields
-        # Datetime
-        try:
-            _datetime = fix_datetime(telemetry['time'])
-
-            # Compare system time and payload time, to look for issues where system time is way out.
-            _timedelta = abs((_datetime - datetime.datetime.utcnow()).total_seconds())
-
-            if _timedelta > 3*60 and telemetry['callsign'] != '4FSKTEST-V2':
-                # Greater than 3 minutes time difference. Discard packet in this case.
-                self.log_error("Payload and Receiver times are offset by more than 3 minutes. Either payload does not have GNSS lock, or your system time is not set correctly. Not uploading.")
-                return None
-
-            if _timedelta > 60:
-                self.log_warning("Payload and Receiver times are offset by more than 1 minute. Either payload does not have GNSS lock, or your system time is not set correctly.")
-
-            _output["datetime"] = _datetime.strftime(
-                "%Y-%m-%dT%H:%M:%S.%fZ"
-            )
-        except Exception as e:
-            self.log_error(
-                "Error converting telemetry datetime to string - %s" % str(e)
-            )
-            self.log_debug("Offending datetime_dt: %s" % str(telemetry["time"]))
-            return None
-
-
-
-        # Callsign - Break if this is an unknown payload ID.
-        if telemetry["callsign"] == "UNKNOWN_PAYLOAD_ID":
-            self.log_error("Not uploading telemetry from unknown payload ID. Is your payload ID list old?")
-            return None
-
-        if '4FSKTEST' in telemetry['callsign']:
-            self.log_warning(f"Payload ID {telemetry['callsign']} is for testing purposes only, and should not be used on an actual flight. Refer here: https://github.com/projecthorus/horusdemodlib/wiki#how-do-i-transmit-it")
-
-        _output['payload_callsign'] = telemetry["callsign"]
-
-        # Frame Number
-        _output["frame"] = telemetry["sequence_number"]
-
-        # Position
-        _output["lat"] = telemetry["latitude"]
-        _output["lon"] = telemetry["longitude"]
-        _output["alt"] = telemetry["altitude"]
-
-        # # Optional Fields
-        if "temperature" in telemetry:
-            if telemetry["temperature"] > -273.15:
-                _output["temp"] = telemetry["temperature"]
-
-        if "satellites" in telemetry:
-            _output["sats"] = telemetry["satellites"]
-
-        if "battery_voltage" in telemetry:
-            if telemetry["battery_voltage"] >= 0.0:
-                _output["batt"] = telemetry["battery_voltage"]
-
-        if "speed" in telemetry:
-            _output["speed"] = telemetry["speed"]
-
-        if "vel_h" in telemetry:
-            _output["vel_h"] = telemetry["vel_h"]
-
-        if "vel_v" in telemetry:
-            _output["vel_v"] = telemetry["vel_v"]
-
-        # Handle the additional SNR and frequency estimation if we have it
-        if "snr" in telemetry:
-            _output["snr"] = telemetry["snr"]
-
-        if "f_centre" in telemetry:
-            _output["frequency"] = telemetry["f_centre"] / 1e6 # Hz -> MHz
-
-        if "raw" in telemetry:
-            _output["raw"] = telemetry["raw"]
-
-        if "modulation" in telemetry:
-            _output["modulation"] = telemetry["modulation"]
-
-        if "modulation_detail" in telemetry:
-            _output["modulation_detail"] = telemetry["modulation_detail"]
-
-        if "baud_rate" in telemetry:
-            _output["baud_rate"] = telemetry["baud_rate"]
-
-        # Add in any field names from the custom field section
-        if "custom_field_names" in telemetry:
-            for _custom_field_name in telemetry["custom_field_names"]:
-                if _custom_field_name in telemetry:
-                    _output[_custom_field_name] = telemetry[_custom_field_name]
-
-
-        return _output
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
                     prog='horus demod')
     parser.add_argument('filename') 
     args = parser.parse_args()
-
-    sh = SondehubUploader()
 
     with Demod() as demod:
         with open(args.filename, "rb") as f:
@@ -290,4 +160,4 @@ if __name__ == "__main__":
                        data.data
                    )
                    
-                   print(sh.reformat_data(packet))
+                   print(telem_to_sondehub(packet))

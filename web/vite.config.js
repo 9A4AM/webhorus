@@ -80,6 +80,14 @@ export default defineConfig({
                         dest: "assets/js",
                     },
                 ],
-            })
+            }), viteStaticCopy(
+                {
+                    targets: [
+                        {
+                            src: 'py/*',
+                            dest: "assets/py",
+                        },
+                    ],
+                })
     ]
 })
