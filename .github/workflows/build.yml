@@ -28,7 +28,7 @@ jobs:
           ./emsdk activate ${PYODIDE_EMSCRIPTEN_VERSION}
           source emsdk_env.sh
           cd ..
-          pyodide build --outdir web/
+          pyodide build --outdir web/assets/
         shell: bash
       - name: Yarn
         run: |
@@ -39,7 +39,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: webhorus.whl
-          path: web/*.whl
+          path: web/assets/webhorus-*.whl
       - name: 'Upload Web Artifact'
         uses: actions/upload-artifact@v4
         with:

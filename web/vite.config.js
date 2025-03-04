@@ -54,30 +54,30 @@ export default defineConfig({
             preserveEntrySignatures: true
         }
     },
-    optimizeDeps: { exclude: ["pyodide", "loadPyodide"], noDiscovery: true },
+    optimizeDeps: {
+        esbuildOptions: {
+            define: {
+                global: 'globalThis'
+            }
+        },
+        exclude: ["pyodide", "loadPyodide"],
+        noDiscovery: true
+    },
     plugins: [viteStaticCopyPyodide(), viteStaticCopy(
         {
             targets: [
                 {
-                    src: 'modules/*',
+                    src: 'assets/*',
                     dest: "assets",
                 },
             ],
-        }), viteStaticCopy(
-            {
-                targets: [
-                    {
-                        src: '../*.whl',
-                        dest: "assets",
-                    },
-                ],
-            }),
+        })
         , viteStaticCopy(
             {
                 targets: [
                     {
                         src: 'js/audio.js',
-                        dest: "assets/js",
+                        dest: "js",
                     },
                 ],
             }), viteStaticCopy(
@@ -85,7 +85,7 @@ export default defineConfig({
                     targets: [
                         {
                             src: 'py/*',
-                            dest: "assets/py",
+                            dest: "py",
                         },
                     ],
                 })

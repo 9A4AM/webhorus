@@ -17,8 +17,6 @@ def write_audio(data):
     data = data.to_py(depth=1)
     data = struct.pack('h'*len(data),*data)
     frame = horus_demod.demodulate(data)
-    #print(horus_demod.modem_stats)
-    #print(horus_demod.modem_stats['snr_est'])
     updateSNR(horus_demod.modem_stats['snr_est'])
     sh_meta = {
             "software_name": "webhorus",

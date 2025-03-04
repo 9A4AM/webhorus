@@ -5,15 +5,58 @@ import '../scss/style.scss'
 import * as bootstrap from 'bootstrap'
 
 
-import Plotly from "plotly.js-dist-min";
+import * as Plotly from "plotly.js-dist-min";
+
 import { loadPyodide } from "pyodide";
 
 
+function addFrame(data){
+    const frames_div = document.getElementById("frames")
+    const card = document.createElement("div")
+    card.classList="card text-dark bg-light mb-3 me-3"
+    card.style = "width: fit-content; display: inline-block"
+    
+
+    const cardTitle = document.createElement("div")
+    cardTitle.classList = "card-header h5"
+    cardTitle.innerText = "["+ data.sequence_number + "] " +  data.time
+    card.appendChild(cardTitle)
+
+    const cardBody = document.createElement("div")
+    cardBody.classList = "card-body"
+    card.appendChild(cardBody)
+
+    const fieldTable = document.createElement("table")
+    fieldTable.classList = "table card-text"
+    cardBody.appendChild(fieldTable)
+
+    for (let field_name of data.packet_format.fields.map((x)=>x[0]).concat(data.custom_field_names)) {
+        if (field_name != "custom" && field_name != "checksum" && field_name != "sequence_number" && field_name != "time"){
+            const field = document.createElement("tr")
+            fieldTable.appendChild(field)
+            const fieldName = document.createElement("th")
+            field.appendChild(fieldName)
+            const titleCase = (str) => str.replace(/\b\S/g, t => t.toUpperCase());
+            fieldName.innerText = titleCase(field_name.replace("_"," "))
+            const fieldValue = document.createElement("td")
+            fieldValue.innerText = data[field_name]
+            field.appendChild(fieldValue)
+        }
+       
+    }
+
+    // const cardText = document.createElement("p")
+    // cardText.classList = "card-text"
+    // cardText.innerText = "meow2"
+    // cardBody.appendChild(cardText)
+
+    frames_div.prepend(card)
+}
+
 globalThis.rx_packet = function(packet, sh_format){
     log_entry(packet, "info")
-
+    addFrame(packet.toJs())
     if(sh_format){
-        console.log(sh_format.toJs())
         const response = fetch("https://api.v2.sondehub.org/amateur/telemetry",{
             method: "PUT",
             headers: {
@@ -66,14 +109,14 @@ globalThis.rx_packet = function(packet, sh_format){
     }
 }
 
-Plotly.newPlot('snr', [{
+globalThis.Plotly.newPlot('snr', [{
   y: [],
   mode: 'lines',
   line: {color: '#80CAF6'}
 }],{
     height: 200,
     margin: {
-        l: 20,
+        l: 30,
         r: 0,
         b: 0,
         t: 0,
@@ -82,7 +125,7 @@ Plotly.newPlot('snr', [{
 });
 
 globalThis.updateSNR = function(snr) {
-  Plotly.extendTraces('snr', {
+    globalThis.Plotly.extendTraces('snr', {
     y: [[snr]]
   }, [0], 256)
 
@@ -106,7 +149,7 @@ async function init_python() {
         pyodide.loadPackage("./assets/webhorus-0.1.0-cp312-cp312-pyodide_2024_0_wasm32.whl")
     ]);
 
-    await pyodide.runPython(await (await fetch("./assets/py/main.py")).text());
+    await pyodide.runPython(await (await fetch("/py/main.py")).text());
 
     globalThis.nin =  await pyodide.runPython("to_js(horus_demod.nin)")
     globalThis.write_audio = await pyodide.runPython("write_audio")
@@ -152,7 +195,7 @@ globalThis.startAudio = async function(constraint) {
     var audio_buffer = []
 
     globalThis.audioContext = new AudioContext({ sampleRate: 48000 });
-    await audioContext.audioWorklet.addModule('assets/js/audio.js')
+    await audioContext.audioWorklet.addModule('/js/audio.js')
     console.log("audio is starting up ...");
 
     if (constraint == undefined){
@@ -191,6 +234,26 @@ globalThis.startAudio = async function(constraint) {
     function on_audio(data){
       audio_buffer = audio_buffer.concat(data)
         if (audio_buffer.length > globalThis.nin ){
+          var max_audio = Math.max(...audio_buffer)
+
+          // update dbfs meter - and yes I know how silly it is that we are turning these back to floats....
+          var dBFS = 20*Math.log10(max_audio/32767); // technically we are ignoring half the signal here, but lets assume its not too bias'd
+          var percent = (1-(dBFS/-120))*100 // I don't even know. just trying to represent the level
+          if (!isFinite(percent)){
+            percent=0;
+          }
+          document.getElementById("dbfs").style.width = percent.toFixed(2) + "%"
+          document.getElementById("dbfstext").innerText = dBFS.toFixed(2) + " dBFS"
+          if (dBFS > -5){
+            document.getElementById("dbfs").classList = "progress-bar bg-danger"
+          } else if (dBFS < -90){
+            document.getElementById("dbfs").classList = "progress-bar bg-danger"
+          } else if (dBFS < -50){
+            document.getElementById("dbfs").classList = "progress-bar bg-warning"
+          } else {
+            document.getElementById("dbfs").classList = "progress-bar bg-success"
+          }
+
           var to_modem = audio_buffer.splice(0,nin)
           globalThis.nin = write_audio(to_modem)
         }

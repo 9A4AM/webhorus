@@ -1,6 +1,6 @@
 It's advised not to install this python package locally as it will break horusdemodlib and crcmod packages.
 
-Rough build process (linux only)
+Rough build process for python lib (linux only)
 ```
 docker run -it -v /Users/mwheeler/src/webhorus:/webhorus -v emsdk:/webhorus/emsdk python:3.12 /bin/sh
 apt-get update
@@ -12,23 +12,25 @@ PYODIDE_EMSCRIPTEN_VERSION=$(pyodide config get emscripten_version)
 ./emsdk install ${PYODIDE_EMSCRIPTEN_VERSION}
 ./emsdk activate ${PYODIDE_EMSCRIPTEN_VERSION}
 source emsdk_env.sh
-pyodide build --outdir web/
+pyodide build --outdir web/assets/
 ```
 
+Web dev
+```
+yarn install
+yarn dev
+```
 
 ### TODO
-- refactor for the new reformat_data from sh
-- github actions builds
-- include pyoxide in artefact
-- js depend manager?
+- github actions upload to s3 (see point below about wasm mimetype)
 - baud / frequency estimate
 - snr max hold
 - refactor things around a bit
 - spectra view - waterfall might be nice if possible
-- upload enable / disable needs to be added
 - station position reports
 - map picker for location + geolocate if available
 - soft axis labels
 - time on the axis
-- vertical axis needs to be wider
-- add dbfs gauge
+- application/wasm needs to be set for s3://horus.sondehub.org/assets/node_modules/pyodide/pyodide.asm.wasm
+- map
+- graph/plot values
