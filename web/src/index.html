@@ -20,6 +20,7 @@
 
         #frames {
             transition: 1s;
+            min-height: 200px;
         }
 
         .card {
@@ -32,6 +33,10 @@
                 transform: translateX(-100%)
             }
         }
+        .leaflet-container img.leaflet-tile {
+            mix-blend-mode: normal !important;
+       
+        }
     </style>
 </head>
 
@@ -42,7 +47,7 @@
 
     <!-- Begin page content -->
     <main role="main" class="container gap-4 d-grid ">
-        <div style="max-width: 85vw;">
+        <div>
             <div class="row justify-content-center">
                 <h1 class="mt-5">webhorus
                 </h1>
@@ -53,11 +58,12 @@
                     </div>
 
                 </div>
-                <div class="row mt-3 ">
+                <div class="row mt-3 mb-3">
                     <div class="col mb-2">
                         <div class="progress position-relative">
                             <div id="dbfs" class="progress-bar" role="progressbar" style="width: 0%;">
-                                <span id="dbfstext" class="justify-content-center d-flex position-absolute w-100">-999 dBFS</span>
+                                <span id="dbfstext" class="justify-content-center d-flex position-absolute w-100">-999
+                                    dBFS</span>
                             </div>
                         </div>
                     </div>
@@ -65,12 +71,10 @@
                 <div class="accordion">
                     <div class="accordion-item" id="configMain">
                         <div class="accordion-header" id="configCard">
-                            <h5>
                                 <button class="accordion-button" data-bs-toggle="collapse"
                                     data-bs-target="#collapseConfig">
-                                    Config
+                                    <b>Config</b>
                                 </button>
-                            </h5>
                         </div>
                         <div id="collapseConfig" class="collapse show ">
                             <div class="accordion-body">
@@ -81,7 +85,8 @@
                                                 input</label>
                                             <select class="form-control form-select" id="sound_adapter"
                                                 onchange="snd_change()" placeholder="" disabled>
-                                                <option selected id="snd_ph">Click start first</option>
+                                                <option value="placeholder" selected id="snd_ph">Click start first
+                                                </option>
                                             </select>
                                         </div>
                                     </div>
@@ -89,21 +94,24 @@
                                         <div class="col mb-2">
                                             <label class="form-label col-form-label" for="callsign">Uploader
                                                 Callsign</label>
-                                            <input class="form-control" id="callsign" placeholder="" value="N0CALL">
+                                            <input class="form-control" id="callsign" placeholder="" value="N0CALL"
+                                                onchange="saveSettings()">
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <div class="col mb-2">
                                             <label class="form-label col-form-label" for="uploader_radio">Uploader
                                                 Radio</label>
-                                            <input class="form-control" id="uploader_radio" placeholder="">
+                                            <input class="form-control" id="uploader_radio" placeholder=""
+                                                onchange="saveSettings()">
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <div class="col mb-2">
                                             <label class="form-label col-form-label" for="uploader_antenna">Uploader
                                                 Antenna</label>
-                                            <input class="form-control" id="uploader_antenna" placeholder="">
+                                            <input class="form-control" id="uploader_antenna" placeholder=""
+                                                onchange="saveSettings()">
                                         </div>
                                     </div>
 
@@ -112,21 +120,36 @@
                                         <div class="col mb-2">
                                             <label class="form-label col-form-label" for="uploader_lat">Uploader
                                                 Latitude</label>
-                                            <input class="form-control" id="uploader_lat" placeholder="">
+                                            <div class="input-group">
+                                                <input class="form-control" id="uploader_lat" placeholder=""
+                                                    onchange="saveSettings()">
+                                                <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                                                    data-bs-target="#mapPickerModal" style="padding-top: 0.5px;">
+                                                    &target;
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <div class="col mb-2">
                                             <label class="form-label col-form-label" for="uploader_lon">Uploader
                                                 Longitude</label>
-                                            <input class="form-control" id="uploader_lon" placeholder="">
+                                                <div class="input-group">
+                                                    <input class="form-control" id="uploader_lon" placeholder=""
+                                                        onchange="saveSettings()">
+                                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                                                        data-bs-target="#mapPickerModal" style="padding-top: 0.5px;">
+                                                        &target;
+                                                    </button>
+                                                </div>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <div class="col mb-2">
                                             <label class="form-label col-form-label" for="uploader_alt">Uploader
                                                 Altitude</label>
-                                            <input class="form-control" id="uploader_alt" placeholder="">
+                                            <input class="form-control" id="uploader_alt" placeholder=""
+                                                onchange="saveSettings()" value="0">
                                         </div>
                                     </div>
                                     <div class="row align-middle">
@@ -135,7 +158,8 @@
 
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" checked
-                                                    id="upload_sondehub">
+                                                    id="upload_sondehub" onclick="saveSettings()"
+                                                    onchange="saveSettings()">
                                                 <label class="form-check-label " for="upload_sondehub">Upload to
                                                     SondeHub</label>
 
@@ -147,7 +171,8 @@
 
 
                                             <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="uploader_position">
+                                                <input class="form-check-input" type="checkbox" id="uploader_position"
+                                                    onclick="saveSettings()" onchange="saveSettings()">
                                                 <label class="form-check-label " for="uploader_position">Upload station
                                                     position</label>
 
@@ -162,14 +187,24 @@
                 </div>
             </div>
         </div>
-        <div class="row g-3" style="position:relative">
+        <div class="row g-3" style="position:relative;max-width: 85vw;">
             <h2>Frames</h2>
             <div id="frames" style="white-space:nowrap;overflow-x: auto;scrollbar-width: none;">
             </div>
         </div>
         <div class="row g-3">
+            <h2>Map</h2>
+            <div id="trackMap" style="height: 500px">
+            </div>
+        </div>
+        <div class="row g-3">
             <h2>SNR</h2>
-            <div id="snr" width="80%" height="10">
+            <div id="snr" width="80%" >
+            </div>
+        </div>
+        <div class="row g-3">
+            <h2>Plots</h2>
+            <div id="plots" width="80%" >
             </div>
         </div>
 
@@ -182,6 +217,27 @@
         </div>
         </div>
     </main>
+
+    <div class="modal fade" id="mapPickerModal" tabindex="-1" aria-labelledby="mapPickerModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="mapPickerModalLabel">Select location</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="location_picker" style="width:auto;height: 400px">
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="saveLocation()">Save
+                        changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <footer class="footer">
         <div class="container">

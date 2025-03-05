@@ -5,7 +5,7 @@ from js import document, rx_packet, updateSNR, navigator
 import datetime
 from webhorus import demod
 from horusdemodlib.decoder import decode_packet
-from horusdemodlib.utils import telem_to_sondehub
+from horusdemodlib.utils import telem_to_sondehub, fix_datetime
 
 VERSION = "0.0.2"
 
@@ -28,7 +28,11 @@ def write_audio(data):
                 "%Y-%m-%dT%H:%M:%S.%fZ"
             ),
         }
-    if document.getElementById("uploader_position").checked:
+    if (document.getElementById("uploader_position").checked
+        and document.getElementById("uploader_lat").value
+        and document.getElementById("uploader_lon").value
+        and document.getElementById("uploader_alt").value
+    ):
         sh_meta["uploader_position"] = [
             float(document.getElementById("uploader_lat").value),
             float(document.getElementById("uploader_lon").value),

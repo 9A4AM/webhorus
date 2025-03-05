@@ -1009,6 +1009,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"leaflet@npm:^1.9.4":
+  version: 1.9.4
+  resolution: "leaflet@npm:1.9.4"
+  checksum: 10c0/f639441dbb7eb9ae3fcd29ffd7d3508f6c6106892441634b0232fafb9ffb1588b05a8244ec7085de2c98b5ed703894df246898477836cfd0ce5b96d4717b5ca1
+  languageName: node
+  linkType: hard
+
 "lru-cache@npm:^10.0.1, lru-cache@npm:^10.2.0":
   version: 10.4.3
   resolution: "lru-cache@npm:10.4.3"
@@ -1937,6 +1944,7 @@ __metadata:
   dependencies:
     "@popperjs/core": "npm:^2.11.8"
     bootstrap: "npm:^5.3.3"
+    leaflet: "npm:^1.9.4"
     plotly.js-dist-min: "npm:^3.0.1"
     pyodide: "npm:^0.27.3"
     sass-embedded: "npm:^1.85.1"
