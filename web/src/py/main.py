@@ -46,5 +46,5 @@ def write_audio(data):
             sh_format = telem_to_sondehub(packet,sh_meta, check_time=False if packet['payload_id'] == '4FSKTEST-V2' else True)
         else:
             sh_format = None
-        rx_packet(packet,sh_format)
+        rx_packet(packet,sh_format,horus_demod.modem_stats)
     return to_js(horus_demod.nin)

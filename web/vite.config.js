@@ -89,6 +89,14 @@ export default defineConfig({
                             dest: "py",
                         },
                     ],
-                })
+                }), viteStaticCopy(
+                    {
+                        targets: [
+                            {
+                                src: '../node_modules/leaflet/dist/images/*',
+                                dest: "",
+                            },
+                        ],
+                    })
     ]
 })

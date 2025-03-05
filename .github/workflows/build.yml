@@ -7,6 +7,9 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: python:3.12
+    permissions:
+      id-token: write
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -45,3 +48,12 @@ jobs:
         with:
           name: web
           path: web/src/dist/**
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: us-east-1
+          role-to-assume: arn:aws:iam::143841941773:role/github
+      - run: |
+          aws s3 sync web/src/dist/ s3://webhorus/ --delete
+          aws s3 cp --content-type application/wasm web/src/dist/assets/node_modules/pyodide/pyodide.asm.wasm s3://webhorus/assets/node_modules/pyodide/pyodide.asm.wasm
+          aws cloudfront create-invalidation --distribution-id EGCXXLSXJCNP5  --paths '/*'

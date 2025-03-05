@@ -64,6 +64,7 @@ globalThis.saveSettings = function(){
     localStorage.setItem("uploader_alt", document.getElementById("uploader_alt").value)
     localStorage.setItem("upload_sondehub", document.getElementById("upload_sondehub").checked)
     localStorage.setItem("uploader_position", document.getElementById("uploader_position").checked)
+    localStorage.setItem("dial", document.getElementById("dial").value)
 }
 
 globalThis.loadSettings = function(){
@@ -75,6 +76,8 @@ globalThis.loadSettings = function(){
     if (localStorage.getItem("uploader_alt")) { document.getElementById("uploader_alt").value = localStorage.getItem("uploader_alt")}
     if (localStorage.getItem("upload_sondehub")) { document.getElementById("upload_sondehub").checked = localStorage.getItem("upload_sondehub")}
     if (localStorage.getItem("uploader_position")) { document.getElementById("uploader_position").checked = localStorage.getItem("uploader_position")}
+    if (localStorage.getItem("dial")) { document.getElementById("dial").value = localStorage.getItem("dial")}
+
 }
 
 function addFrame(data){
@@ -141,16 +144,37 @@ function updateMarker(data){
     trackMap.panTo(position);
 }
 
-globalThis.rx_packet = function(packet, sh_format){
+globalThis.rx_packet = function(packet, sh_format,stats){
     log_entry(packet, "info")
 
+    var freq_est = stats.toJs().f_est
+    var freq_mean = freq_est.reduce((a,b)=>a+b,0)/freq_est.length
+
+    var final_freq
+
+    if (document.getElementById("dial").value){
+        var dial_freq = parseFloat(document.getElementById("dial").value)
+        if (!isNaN(dial_freq)){
+            dial_freq = dial_freq * 1000000
+            final_freq = (freq_mean + dial_freq)/1000000
+        }
+    }
+
     if(sh_format){
+        var sh_packet = sh_format.toJs()
+        if (final_freq){
+            sh_packet['frequency'] = final_freq
+        }
+        
+        // Mark will want me to do some peak hold stuff here, but honestly that just seems like too much work.
+        sh_packet['snr'] = stats.toJs().snr_est
+
         const response = fetch("https://api.v2.sondehub.org/amateur/telemetry",{
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify([sh_format.toJs()]) 
+            body: JSON.stringify([sh_packet]) 
         }).then(response => {
             var sh_log_text = ""
             var sh_log_level = "info"

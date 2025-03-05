@@ -21,7 +21,6 @@ class Horus extends AudioWorkletProcessor {
       }
 
       if (this.audio_buffer.length > this.nin ){
-        console.log(this.nin)
         var to_modem = this.audio_buffer.splice(0,this.nin)
         this.port.postMessage(to_modem)
       }
