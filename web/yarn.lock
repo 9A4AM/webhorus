@@ -5,6 +5,13 @@ __metadata:
   version: 8
   cacheKey: 10c0
 
+"@bp1410/spectro-vis@npm:^0.1.0":
+  version: 0.1.0
+  resolution: "@bp1410/spectro-vis@npm:0.1.0"
+  checksum: 10c0/8209e066555b2baee93b478f6ccdb1daa3ab64e86e47f25d0a83c11dc4142eb2cd4dc056f9e8088c0dabfa63923c3164b9cdeb758f533584ba8a1a0e565330d3
+  languageName: node
+  linkType: hard
+
 "@bufbuild/protobuf@npm:^2.0.0":
   version: 2.2.3
   resolution: "@bufbuild/protobuf@npm:2.2.3"
@@ -1942,6 +1949,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "web@workspace:."
   dependencies:
+    "@bp1410/spectro-vis": "npm:^0.1.0"
     "@popperjs/core": "npm:^2.11.8"
     bootstrap: "npm:^5.3.3"
     leaflet: "npm:^1.9.4"

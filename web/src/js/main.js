@@ -1,5 +1,6 @@
 // Import our custom CSS
 import '../scss/style.scss'
+import { SpectrogramThree } from '@bp1410/spectro-vis';
 
 // Import all of Bootstrap's JS
 import * as bootstrap from 'bootstrap'
@@ -10,6 +11,8 @@ import * as Plotly from "plotly.js-dist-min";
 import "leaflet";
 
 var mapPickerMap;
+
+const fftSize = 32768
 
 function loadMapPicker(){
     mapPickerMap = L.map('location_picker', {}).setView([-37.8136, 144.9631], 6);
@@ -367,6 +370,7 @@ globalThis.snd_change = async function(){
 
 var microphone_stream = null
 var horusNode
+var activeAnalyser
 
 globalThis.startAudio = async function(constraint) {
 
@@ -445,6 +449,7 @@ globalThis.startAudio = async function(constraint) {
 
 
     function start_microphone(stream) {
+   
         document.getElementById("audio_start").setAttribute("disabled","disabled");
         document.getElementById("audio_start").classList.add("btn-outline-success")
         document.getElementById("audio_start").innerText = "Running"
@@ -469,6 +474,34 @@ globalThis.startAudio = async function(constraint) {
           on_audio(e.data)
         }
         audioContext.resume()
+
+        // setup spectogram
+        activeAnalyser = audioContext.createAnalyser();
+        activeAnalyser.fftSize = fftSize;
+        activeAnalyser.smoothingTimeConstant = 0;
+        microphone_stream.connect(activeAnalyser);
+
+        globalThis.spectrogram.reset()
+
+
+        if (activeAnalyser) {
+            let analyser = activeAnalyser;
+            const maxdB = analyser.maxDecibels;
+            const mindB = analyser.minDecibels;
+            const bufferLength = analyser.frequencyBinCount;
+            globalThis.freqData = new Float32Array(bufferLength);
+
+            function update(){
+                requestAnimationFrame(update);
+                analyser.getFloatFrequencyData(globalThis.freqData);
+                for (let i = 0; i < globalThis.freqData.length; i++) {
+                    globalThis.freqData[i] = (globalThis.freqData[i] - mindB) / (maxdB - mindB);
+                }
+                globalThis.freqData = globalThis.freqData.map(v => Math.max(0, Math.min(1, v)));
+            }
+            update()
+
+        }
     }
 };
 
@@ -481,7 +514,45 @@ function log_entry(message, level){
     rx_log.prepend(log_entry)
 }
 
+function setupSpecturm(){
+    //document.getElementById("canvas").width = document.getElementById("canvas").getBoundingClientRect().width
+    console.log(document.getElementById("canvas").getBoundingClientRect().width)
+    globalThis.spectrogram = new SpectrogramThree({
+        canvas: document.getElementById("canvas"),
+        fftSize: fftSize,
+        sampling: 48000,
+        fontFace: "Monospace",
+        fontSize: "24",
+        fontColor: "#777",
+        // bgColor: "#ffffff",
+        // barColor: "#ccc",
+        // peakColor: "#000",
+        // gridColor: "#000",
+        // baseColors: [0xffffff, 0xeeeeee, 0xcccccc, 0x999999, 0x555555, 0x333333, 0x111111, 0x000000]
+    });
+    spectrogram.log(48000);
+    spectrogram.setSampling(48000);
+    spectrogram.removeListeners()
+    spectrogram.setFreqRange(50,4000)
+    spectrogram.setVisibleRows(500);
+
+            
+    setInterval(() => {
+        if(activeAnalyser){
+            spectrogram.step(globalThis.freqData, fftSize/48000*1000)
+        }
+    },20);
+
+}
+
 globalThis.loadSettings();
 loadMapPicker()
 loadTrackMap()
 init_python();
+setupSpecturm();
+
+
+
+
+
+

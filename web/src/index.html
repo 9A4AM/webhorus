@@ -33,9 +33,10 @@
                 transform: translateX(-100%)
             }
         }
+
         .leaflet-container img.leaflet-tile {
             mix-blend-mode: normal !important;
-       
+
         }
     </style>
 </head>
@@ -71,10 +72,9 @@
                 <div class="accordion">
                     <div class="accordion-item" id="configMain">
                         <div class="accordion-header" id="configCard">
-                                <button class="accordion-button" data-bs-toggle="collapse"
-                                    data-bs-target="#collapseConfig">
-                                    <b>Config</b>
-                                </button>
+                            <button class="accordion-button" data-bs-toggle="collapse" data-bs-target="#collapseConfig">
+                                <b>Config</b>
+                            </button>
                         </div>
                         <div id="collapseConfig" class="collapse show ">
                             <div class="accordion-body">
@@ -134,14 +134,14 @@
                                         <div class="col mb-2">
                                             <label class="form-label col-form-label" for="uploader_lon">Uploader
                                                 Longitude</label>
-                                                <div class="input-group">
-                                                    <input class="form-control" id="uploader_lon" placeholder=""
-                                                        onchange="saveSettings()" type="number" inputmode="decimal">
-                                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                                                        data-bs-target="#mapPickerModal" style="padding-top: 0.5px;">
-                                                        &target;
-                                                    </button>
-                                                </div>
+                                            <div class="input-group">
+                                                <input class="form-control" id="uploader_lon" placeholder=""
+                                                    onchange="saveSettings()" type="number" inputmode="decimal">
+                                                <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                                                    data-bs-target="#mapPickerModal" style="padding-top: 0.5px;">
+                                                    &target;
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
@@ -154,7 +154,8 @@
                                     </div>
                                     <div class="col-md-4">
                                         <div class="col mb-2">
-                                            <label class="form-label col-form-label" for="dial">Dial Frequency (MHz)</label>
+                                            <label class="form-label col-form-label" for="dial">Dial Frequency
+                                                (MHz)</label>
                                             <input class="form-control" id="dial" placeholder=""
                                                 onchange="saveSettings()" type="number" inputmode="decimal">
                                         </div>
@@ -205,13 +206,19 @@
             </div>
         </div>
         <div class="row g-3">
+            <h2>Spectrum</h2>
+            <div>
+                <canvas id="canvas" width="1024" height="576" ></canvas>
+            </div>
+        </div>
+        <div class="row g-3">
             <h2>SNR</h2>
-            <div id="snr" width="80%" >
+            <div id="snr" width="80%">
             </div>
         </div>
         <div class="row g-3">
             <h2>Plots</h2>
-            <div id="plots" width="80%" >
+            <div id="plots" width="80%">
             </div>
         </div>
 
@@ -222,7 +229,9 @@
 
             </div>
         </div>
-        </div>
+
+
+
     </main>
 
     <div class="modal fade" id="mapPickerModal" tabindex="-1" aria-labelledby="mapPickerModalLabel" aria-hidden="true">
@@ -245,6 +254,7 @@
             </div>
         </div>
     </div>
+
 
     <footer class="footer">
         <div class="container">
