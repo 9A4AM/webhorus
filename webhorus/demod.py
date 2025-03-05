@@ -59,6 +59,8 @@ class Demod():
             mode, rate, tone_spacing
         )
 
+        horus_api.horus_set_freq_est_limits(self.hstates,100,4000)
+
         # set verbose
         horus_api.horus_set_verbose(self.hstates, verbose)
 

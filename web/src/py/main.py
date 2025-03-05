@@ -9,7 +9,7 @@ from horusdemodlib.utils import telem_to_sondehub, fix_datetime
 
 VERSION = "0.0.2"
 
-horus_demod = demod.Demod()
+horus_demod = demod.Demod(tone_spacing=270)
 
 buffer = b''
 
