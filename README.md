@@ -24,3 +24,4 @@ yarn dev
 ### TODO
 
 - station position reports
+- resampler for firefox
