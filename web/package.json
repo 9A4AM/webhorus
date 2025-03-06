@@ -2,7 +2,6 @@
   "name": "web",
   "packageManager": "yarn@4.7.0",
   "dependencies": {
-    "@bp1410/spectro-vis": "^0.1.0",
     "@popperjs/core": "^2.11.8",
     "bootstrap": "^5.3.3",
     "leaflet": "^1.9.4",

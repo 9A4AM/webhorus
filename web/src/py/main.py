@@ -1,7 +1,7 @@
 import struct
 from pyodide.ffi import to_js
 from pyodide.ffi import create_proxy
-from js import document, rx_packet, updateSNR, navigator
+from js import document, rx_packet, updateStats, navigator
 import datetime
 from webhorus import demod
 from horusdemodlib.decoder import decode_packet
@@ -17,7 +17,7 @@ def write_audio(data):
     data = data.to_py(depth=1)
     data = struct.pack('h'*len(data),*data)
     frame = horus_demod.demodulate(data)
-    updateSNR(horus_demod.modem_stats['snr_est'])
+    updateStats(horus_demod.modem_stats)
     sh_meta = {
             "software_name": "webhorus",
             "software_version": f"{VERSION} {navigator.userAgent}",

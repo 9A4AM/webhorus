@@ -1,6 +1,5 @@
 // Import our custom CSS
 import '../scss/style.scss'
-import { SpectrogramThree } from '@bp1410/spectro-vis';
 
 // Import all of Bootstrap's JS
 import * as bootstrap from 'bootstrap'
@@ -12,7 +11,7 @@ import "leaflet";
 
 var mapPickerMap;
 
-const fftSize = 32768
+const fftSize = 16384
 
 function loadMapPicker(){
     mapPickerMap = L.map('location_picker', {}).setView([-37.8136, 144.9631], 6);
@@ -284,6 +283,35 @@ globalThis.Plotly.newPlot('snr', [{
     }
 },{responsive: true});
 
+var spectrum_layout= {
+    height: 300,
+    margin: {
+        l: 45,
+        r: 0,
+        b: 30,
+        t: 0,
+        pad: 0
+      },
+    yaxis: {
+        title: {
+            text: 'dB',
+        },
+        type: 'log',
+        autorange: "reversed",
+        tickprefix: "-",
+        autorangeoptions:{
+            include: [60,150],
+            clipmax: 150,
+            clipmin: 0.1
+        }
+    }
+
+}
+globalThis.Plotly.newPlot('spectrum', [{
+    y: [],
+    x: [],
+    mode: 'lines'
+  }],spectrum_layout,{responsive: true});
 
 globalThis.Plotly.newPlot('plots', [],{
       height: 500,
@@ -301,9 +329,28 @@ globalThis.Plotly.newPlot('plots', [],{
       }
   },{responsive: true});
 
-globalThis.updateSNR = function(snr) {
+globalThis.updateStats = function(stats) {
+    const stats_js = stats.toJs()
+    const freq_est = stats_js.f_est
+    const freq_mean = freq_est.reduce((a,b)=>a+b,0)/freq_est.length
+
+    // update spectrum annotations
+    spectrum_layout.annotations = freq_est.map((x)=>{
+        return {
+            x: x,
+            y: 0,
+            yref: "paper",
+            ayref: "paper",
+            ay: 1000,
+            showarrow: true,
+            arrowside: "none",
+            arrowwidth: 0.5,
+            arrowcolor: "grey"
+
+        }
+    })
     globalThis.Plotly.extendTraces('snr', {
-    y: [[snr]],
+    y: [[stats_js.snr_est]],
     x: [[new Date().toISOString()]]
   }, [0], 256)
 }
@@ -477,29 +524,41 @@ globalThis.startAudio = async function(constraint) {
 
         // setup spectogram
         activeAnalyser = audioContext.createAnalyser();
+        activeAnalyser.chan
         activeAnalyser.fftSize = fftSize;
-        activeAnalyser.smoothingTimeConstant = 0;
+        activeAnalyser.smoothingTimeConstant = 0.2;
         microphone_stream.connect(activeAnalyser);
 
-        globalThis.spectrogram.reset()
 
 
         if (activeAnalyser) {
             let analyser = activeAnalyser;
             const maxdB = analyser.maxDecibels;
             const mindB = analyser.minDecibels;
-            const bufferLength = analyser.frequencyBinCount;
-            globalThis.freqData = new Float32Array(bufferLength);
+            globalThis.bufferLength = analyser.frequencyBinCount;
+            const step = (48000/2)/globalThis.bufferLength
+            const x_values = [...Array(globalThis.bufferLength).keys()].map((x)=>(x+1)*step)
+            
+            // get closest index to 5k hz to limit plot size
+            globalThis.max_index = x_values.reduce((prev,curr,index)=>{if (curr < 5000) {return index} else {return prev}},0)
+            globalThis.filtered_x_values = x_values.slice(0, globalThis.max_index)
 
-            function update(){
-                requestAnimationFrame(update);
-                analyser.getFloatFrequencyData(globalThis.freqData);
-                for (let i = 0; i < globalThis.freqData.length; i++) {
-                    globalThis.freqData[i] = (globalThis.freqData[i] - mindB) / (maxdB - mindB);
-                }
-                globalThis.freqData = globalThis.freqData.map(v => Math.max(0, Math.min(1, v)));
+            if (globalThis.analyserUpdate){
+                clearInterval(globalThis.analyserUpdate)
             }
-            update()
+            globalThis.analyserUpdate = setInterval(() => {
+                const freqData = new Float32Array(globalThis.bufferLength);
+                analyser.getFloatFrequencyData(freqData);
+                const spectrum_data = {
+                    y: [freqData.slice(0, globalThis.max_index).map((x)=>Math.max(Math.min(150, Math.abs(x)),0.1))],
+                    x: [globalThis.filtered_x_values]
+                };
+                globalThis.Plotly.update('spectrum',
+                    spectrum_data,
+                    spectrum_layout)
+            }, 200)
+            
+            
 
         }
     }
@@ -514,42 +573,12 @@ function log_entry(message, level){
     rx_log.prepend(log_entry)
 }
 
-function setupSpecturm(){
-    //document.getElementById("canvas").width = document.getElementById("canvas").getBoundingClientRect().width
-    console.log(document.getElementById("canvas").getBoundingClientRect().width)
-    globalThis.spectrogram = new SpectrogramThree({
-        canvas: document.getElementById("canvas"),
-        fftSize: fftSize,
-        sampling: 48000,
-        fontFace: "Monospace",
-        fontSize: "24",
-        fontColor: "#777",
-        // bgColor: "#ffffff",
-        // barColor: "#ccc",
-        // peakColor: "#000",
-        // gridColor: "#000",
-        // baseColors: [0xffffff, 0xeeeeee, 0xcccccc, 0x999999, 0x555555, 0x333333, 0x111111, 0x000000]
-    });
-    spectrogram.log(48000);
-    spectrogram.setSampling(48000);
-    spectrogram.removeListeners()
-    spectrogram.setFreqRange(50,4000)
-    spectrogram.setVisibleRows(500);
 
-            
-    setInterval(() => {
-        if(activeAnalyser){
-            spectrogram.step(globalThis.freqData, fftSize/48000*1000)
-        }
-    },20);
-
-}
 
 globalThis.loadSettings();
 loadMapPicker()
 loadTrackMap()
 init_python();
-setupSpecturm();
 
 
 
