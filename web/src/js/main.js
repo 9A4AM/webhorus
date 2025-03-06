@@ -86,12 +86,11 @@ globalThis.loadSettings = function(){
 function addFrame(data){
     const frames_div = document.getElementById("frames")
     const card = document.createElement("div")
-    card.classList="card text-dark bg-light mb-3 me-3"
-    card.style = "width: fit-content; display: inline-block"
+    card.classList="card text-dark bg-light me-3"
     
 
     const cardTitle = document.createElement("div")
-    cardTitle.classList = "card-header h5"
+    cardTitle.classList = "card-header h6"
     cardTitle.innerText = "["+ data.sequence_number + "] " +  data.time
     card.appendChild(cardTitle)
 
@@ -103,6 +102,11 @@ function addFrame(data){
     fieldTable.classList = "table card-text"
     cardBody.appendChild(fieldTable)
 
+
+    function toFixedIfNecessary( value, dp ){
+        return +parseFloat(value).toFixed( dp );
+    }
+
     for (let field_name of data.packet_format.fields.map((x)=>x[0]).concat(data.custom_field_names)) {
         if (field_name != "custom" && field_name != "checksum" && field_name != "sequence_number" && field_name != "time"){
             const field = document.createElement("tr")
@@ -112,16 +116,11 @@ function addFrame(data){
             const titleCase = (str) => str.replace(/\b\S/g, t => t.toUpperCase());
             fieldName.innerText = titleCase(field_name.replace("_"," "))
             const fieldValue = document.createElement("td")
-            fieldValue.innerText = data[field_name]
+            fieldValue.innerText = toFixedIfNecessary(parseFloat(data[field_name]),4)
             field.appendChild(fieldValue)
         }
        
     }
-
-    // const cardText = document.createElement("p")
-    // cardText.classList = "card-text"
-    // cardText.innerText = "meow2"
-    // cardBody.appendChild(cardText)
 
     frames_div.prepend(card)
 }
@@ -148,7 +147,7 @@ function updateMarker(data){
 }
 
 globalThis.rx_packet = function(packet, sh_format,stats){
-    log_entry(packet, "info")
+    log_entry(JSON.stringify(packet.toJs()), "info")
 
     var freq_est = stats.toJs().f_est
     var freq_mean = freq_est.reduce((a,b)=>a+b,0)/freq_est.length

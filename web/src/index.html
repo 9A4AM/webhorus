@@ -14,29 +14,38 @@
             pointer-events: none;
             height: 100%;
             width: 100%;
-            background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 00) 75%, rgba(255, 255, 255, 0.95) 90%, rgba(255, 255, 255, 1) 100%);
+            background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 00) 80%, rgba(255, 255, 255, 1) 100%);
             background-attachment: fixed;
         }
 
         #frames {
-            transition: 1s;
             min-height: 200px;
         }
 
+        .card-body {
+            overflow: hidden;
+        }
         .card {
-            transition: 1s, background-color 2s;
+            transition: all 1s, background-color 2s;
+            width: auto !important;
+            width: calc-size(auto, size) !important;
+            display: inline-block !important;
         }
 
         @starting-style {
             .card {
                 opacity: 0;
-                transform: translateX(-100%)
+                width: 0px !important;
             }
         }
 
         .leaflet-container img.leaflet-tile {
             mix-blend-mode: normal !important;
 
+        }
+
+        .alert {
+            overflow-wrap: anywhere;
         }
     </style>
 </head>
@@ -204,28 +213,28 @@
         </div>
         <div class="row g-3">
             <h2>Spectrum</h2>
-            <div id="spectrum" >
+            <div id="spectrum" style="width:95%">
             </div>
         </div>
-        <div class="row g-3" style="position:relative;max-width: 85vw;">
+        <div class="row g-3" style="position:relative;width: 95vw;">
             <h2>Frames</h2>
             <div id="frames" style="white-space:nowrap;overflow-x: auto;scrollbar-width: none;">
             </div>
         </div>
         <div class="row g-3">
             <h2>Map</h2>
-            <div id="trackMap" style="height: 500px">
+            <div id="trackMap" style="height: 500px; width: 95%;">
             </div>
         </div>
 
         <div class="row g-3">
             <h2>SNR</h2>
-            <div id="snr" width="80%">
+            <div id="snr" style="width:95%">
             </div>
         </div>
         <div class="row g-3">
             <h2>Plots</h2>
-            <div id="plots" width="80%">
+            <div id="plots" style="width:95%">
             </div>
         </div>
 
