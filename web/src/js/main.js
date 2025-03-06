@@ -67,6 +67,7 @@ globalThis.saveSettings = function(){
     localStorage.setItem("upload_sondehub", document.getElementById("upload_sondehub").checked)
     localStorage.setItem("uploader_position", document.getElementById("uploader_position").checked)
     localStorage.setItem("dial", document.getElementById("dial").value)
+    localStorage.setItem("tone_spacing", document.getElementById("tone_spacing").value)
 }
 
 globalThis.loadSettings = function(){
@@ -79,7 +80,7 @@ globalThis.loadSettings = function(){
     if (localStorage.getItem("upload_sondehub")) { document.getElementById("upload_sondehub").checked = localStorage.getItem("upload_sondehub")}
     if (localStorage.getItem("uploader_position")) { document.getElementById("uploader_position").checked = localStorage.getItem("uploader_position")}
     if (localStorage.getItem("dial")) { document.getElementById("dial").value = localStorage.getItem("dial")}
-
+    if (localStorage.getItem("tone_spacing")) { document.getElementById("tone_spacing").value = localStorage.getItem("tone_spacing")}
 }
 
 function addFrame(data){
@@ -355,6 +356,14 @@ globalThis.updateStats = function(stats) {
   }, [0], 256)
 }
 
+globalThis.updateToneSpacing = function(){
+    var tone_spacing = parseInt(document.getElementById("tone_spacing").value)
+    if (isFinite(tone_spacing)){
+        globalThis.update_tone_spacing(tone_spacing)
+    }
+    saveSettings()
+}
+
 async function init_python() {
 
     const pyodide = await loadPyodide();
@@ -378,6 +387,7 @@ async function init_python() {
     globalThis.nin =  await pyodide.runPython("to_js(horus_demod.nin)")
     globalThis.write_audio = await pyodide.runPython("write_audio")
     globalThis.fix_datetime = await pyodide.runPython("fix_datetime")
+    globalThis.update_tone_spacing = await pyodide.runPython("update_tone_spacing")
     
     document.getElementById("audio_start").removeAttribute("disabled");
     document.getElementById("audio_start").innerText = "Start"
@@ -463,6 +473,7 @@ globalThis.startAudio = async function(constraint) {
             start_microphone(stream);
         }
     })
+
 
 
     function on_audio(audio_buffer){

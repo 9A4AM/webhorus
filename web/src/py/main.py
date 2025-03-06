@@ -9,9 +9,14 @@ from horusdemodlib.utils import telem_to_sondehub, fix_datetime
 
 VERSION = "0.0.2"
 
-horus_demod = demod.Demod(tone_spacing=270)
+horus_demod = demod.Demod(tone_spacing=int(document.getElementById("tone_spacing").value))
 
 buffer = b''
+
+def update_tone_spacing(tone_spacing):
+    global horus_demod
+    horus_demod = demod.Demod(tone_spacing=tone_spacing)
+    print(f"Updated tonespacing to : {tone_spacing}")
 
 def write_audio(data):
     data = data.to_py(depth=1)
