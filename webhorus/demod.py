@@ -55,9 +55,17 @@ class Demod():
     ):
         self.stereo_iq = stereo_iq
 
+        for x in range(8,50):
+            if (sample_rate/100)%x == 0: # we are assuming the mode is horus binary at 100 baud
+                p = x
+                print(f"Found P value: {p}")
+                break
+        else:
+            raise("Could not find suitable P value")
+
         # open modem
         self.hstates = horus_api.horus_open_advanced_sample_rate(
-            mode, rate, tone_spacing, sample_rate
+            mode, rate, tone_spacing, sample_rate, p
         )
 
         horus_api.horus_set_freq_est_limits(self.hstates,100,4000)

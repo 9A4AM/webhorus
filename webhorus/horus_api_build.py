@@ -146,9 +146,11 @@ struct horus *horus_open_advanced (int mode, int Rs, int tx_tone_spacing);
  * int Rs - Symbol Rate (Hz). Set to -1 to use the default value for the mode (refer above)
  * int tx_tone_spacing - FSK Tone Spacing, to configure mask estimator. Set to -1 to disable mask estimator.
  * int Fs - Sample rate
+  * int P - Oversampling rate. (Fs/Rs)%P should equal 0 other the modem will be sad.
+
  */
 
- struct horus *horus_open_advanced_sample_rate (int mode, int Rs, int tx_tone_spacing, int Fs);
+ struct horus *horus_open_advanced_sample_rate (int mode, int Rs, int tx_tone_spacing, int Fs, int P);
 
 /*
  * Close a Horus demodulator struct and free memory.
@@ -314,8 +316,6 @@ ffibuilder.set_source("_horus_api_cffi",
         "./horusdemodlib/src/horus_api.c",
         "./horusdemodlib/src/horus_l2.c",
       ],
-    #   libraries = ['horus'],
-    #   library_dirs = ['./build_horusdemodlib/src/'],
        include_dirs = [ "./horusdemodlib/src"],
        extra_compile_args = ["-DHORUS_L2_RX","-DINTERLEAVER","-DSCRAMBLER","-DRUN_TIME_TABLES"]
      )   # library name, for the linker
