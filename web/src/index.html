@@ -27,8 +27,8 @@
         }
         .card {
             transition: all 1s, background-color 2s;
-            width: auto !important;
-            width: calc-size(auto, size) !important;
+            width: fit-content !important;
+            width: calc-size(fit-content, size) !important; /* firefox doesn't support this */
             display: inline-block !important;
         }
 
@@ -216,7 +216,7 @@
             <div id="spectrum" style="width:95%">
             </div>
         </div>
-        <div class="row g-3" style="position:relative;width: 95vw;">
+        <div class="row g-3" style="position:relative;width: 80vw;">
             <h2>Frames</h2>
             <div id="frames" style="white-space:nowrap;overflow-x: auto;scrollbar-width: none;">
             </div>
@@ -241,7 +241,7 @@
         <div class="row g-3">
             <h2>RX Log</h2>
             <p>Logs!</p>
-            <div id="rx_log">
+            <div id="rx_log" class="col-md-12">
 
             </div>
         </div>

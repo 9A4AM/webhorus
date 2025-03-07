@@ -9,9 +9,15 @@ from horusdemodlib.utils import telem_to_sondehub, fix_datetime
 
 VERSION = "0.0.2"
 
-horus_demod = demod.Demod(tone_spacing=int(document.getElementById("tone_spacing").value))
+#horus_demod = demod.Demod(tone_spacing=int(document.getElementById("tone_spacing").value))
 
 buffer = b''
+
+def start_modem(sample_rate):
+    global horus_demod
+    horus_demod = demod.Demod(tone_spacing=int(document.getElementById("tone_spacing").value), sample_rate=sample_rate)
+    print(sample_rate)
+    return horus_demod.nin
 
 def update_tone_spacing(tone_spacing):
     global horus_demod

@@ -50,13 +50,14 @@ class Demod():
             tone_spacing=-1,
             stereo_iq=False,
             verbose=False,
-            callback=None
+            callback=None,
+            sample_rate=44100
     ):
         self.stereo_iq = stereo_iq
 
         # open modem
-        self.hstates = horus_api.horus_open_advanced(
-            mode, rate, tone_spacing
+        self.hstates = horus_api.horus_open_advanced_sample_rate(
+            mode, rate, tone_spacing, sample_rate
         )
 
         horus_api.horus_set_freq_est_limits(self.hstates,100,4000)

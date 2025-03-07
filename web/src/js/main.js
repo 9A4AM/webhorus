@@ -383,11 +383,11 @@ async function init_python() {
 
     await pyodide.runPython(await (await fetch("/py/main.py")).text());
 
-    globalThis.nin =  await pyodide.runPython("to_js(horus_demod.nin)")
-    globalThis.write_audio = await pyodide.runPython("write_audio")
-    globalThis.fix_datetime = await pyodide.runPython("fix_datetime")
-    globalThis.update_tone_spacing = await pyodide.runPython("update_tone_spacing")
-    
+    //globalThis.nin =  pyodide.runPython("to_js(horus_demod.nin)")
+    globalThis.write_audio = pyodide.runPython("write_audio")
+    globalThis.fix_datetime = pyodide.runPython("fix_datetime")
+    globalThis.update_tone_spacing = pyodide.runPython("update_tone_spacing")
+    globalThis.start_modem = pyodide.runPython("start_modem")
     document.getElementById("audio_start").removeAttribute("disabled");
     document.getElementById("audio_start").innerText = "Start"
 }
@@ -430,7 +430,7 @@ var activeAnalyser
 
 globalThis.startAudio = async function(constraint) {
 
-    globalThis.audioContext = new AudioContext({ sampleRate: 48000 });
+    globalThis.audioContext = new AudioContext();
     await audioContext.audioWorklet.addModule('/js/audio.js')
     console.log("audio is starting up ...");
 
@@ -515,18 +515,20 @@ globalThis.startAudio = async function(constraint) {
             microphone_stream.disconnect()
         }
         try {
-            microphone_stream = audioContext.createMediaStreamSource(stream);
+            globalThis.microphone_stream = audioContext.createMediaStreamSource(stream);
         } catch(err) {
             console.log(err)
             log_entry("Error opening audio device. For firefox users - ensure your default sound device is set to 48,000 sample rate in your OS settings", "danger")
         }
+
+        globalThis.nin = globalThis.start_modem(audioContext.sampleRate)
 
         horusNode = new AudioWorkletNode(audioContext, 'horus', {
             processorOptions: {
                 nin: globalThis.nin
             }
         });
-        microphone_stream.connect(horusNode);
+        globalThis.microphone_stream.connect(horusNode);
         horusNode.port.onmessage = (e) => {
           on_audio(e.data)
         }
@@ -537,7 +539,7 @@ globalThis.startAudio = async function(constraint) {
         activeAnalyser.chan
         activeAnalyser.fftSize = fftSize;
         activeAnalyser.smoothingTimeConstant = 0.2;
-        microphone_stream.connect(activeAnalyser);
+        globalThis.microphone_stream.connect(activeAnalyser);
 
 
 
