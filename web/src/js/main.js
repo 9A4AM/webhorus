@@ -548,7 +548,7 @@ globalThis.startAudio = async function(constraint) {
             const maxdB = analyser.maxDecibels;
             const mindB = analyser.minDecibels;
             globalThis.bufferLength = analyser.frequencyBinCount;
-            const step = (48000/2)/globalThis.bufferLength
+            const step = (audioContext.sampleRate/2)/globalThis.bufferLength
             const x_values = [...Array(globalThis.bufferLength).keys()].map((x)=>(x+1)*step)
             
             // get closest index to 5k hz to limit plot size
