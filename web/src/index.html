@@ -25,10 +25,12 @@
         .card-body {
             overflow: hidden;
         }
+
         .card {
             transition: all 1s, background-color 2s;
             width: fit-content !important;
-            width: calc-size(fit-content, size) !important; /* firefox doesn't support this */
+            width: calc-size(fit-content, size) !important;
+            /* firefox doesn't support this */
             display: inline-block !important;
         }
 
@@ -171,9 +173,11 @@
                                     </div>
                                     <div class="col-md-4">
                                         <div class="col mb-2">
-                                            <label class="form-label col-form-label" for="tone_spacing">Tone Spacing</label>
+                                            <label class="form-label col-form-label" for="tone_spacing">Tone
+                                                Spacing</label>
                                             <input class="form-control" id="tone_spacing" placeholder=""
-                                                onchange="updateToneSpacing()" type="number" inputmode="decimal" value="270">
+                                                onchange="updateToneSpacing()" type="number" inputmode="decimal"
+                                                value="270">
                                         </div>
                                     </div>
                                     <div class="row align-middle">
@@ -218,7 +222,7 @@
         </div>
         <div class="row g-3" style="position:relative; width:80vw">
             <h2>Frames</h2>
-            <div id="frames"  style="white-space:nowrap;overflow-x: auto;scrollbar-width: none;">
+            <div id="frames" style="white-space:nowrap;overflow-x: auto;scrollbar-width: none;">
             </div>
         </div>
         <div class="row g-3">
