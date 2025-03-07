@@ -269,6 +269,7 @@ globalThis.Plotly.newPlot('snr', [{
     mode: 'lines'
   }],{
     height: 200,
+    autosize: true,
     margin: {
         l: 35,
         r: 0,
@@ -290,6 +291,7 @@ globalThis.Plotly.newPlot('snr', [{
 
 var spectrum_layout= {
     height: 300,
+    autosize: true,
     margin: {
         l: 45,
         r: 0,
@@ -320,6 +322,7 @@ globalThis.Plotly.newPlot('spectrum', [{
 
 globalThis.Plotly.newPlot('plots', [],{
       height: 500,
+      autosize: true,
       margin: {
           l: 35,
           r: 0,
