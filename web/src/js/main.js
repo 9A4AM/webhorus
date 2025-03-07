@@ -543,7 +543,7 @@ globalThis.startAudio = async function(constraint) {
         activeAnalyser = audioContext.createAnalyser();
         activeAnalyser.chan
         activeAnalyser.fftSize = fftSize;
-        activeAnalyser.smoothingTimeConstant = 0.2;
+        activeAnalyser.smoothingTimeConstant = 0.25;
         globalThis.microphone_stream.connect(activeAnalyser);
 
 
