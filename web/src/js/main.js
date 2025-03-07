@@ -389,7 +389,7 @@ async function init_python() {
         pyodide.loadPackage("./assets/webhorus-0.1.0-cp312-cp312-pyodide_2024_0_wasm32.whl")
     ]);
 
-    await pyodide.runPython(await (await fetch("/py/main.py")).text());
+    pyodide.runPython(await (await fetch("/py/main.py")).text());
 
     //globalThis.nin =  pyodide.runPython("to_js(horus_demod.nin)")
     globalThis.write_audio = pyodide.runPython("write_audio")
