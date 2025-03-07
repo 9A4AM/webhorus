@@ -116,7 +116,12 @@ function addFrame(data){
             const titleCase = (str) => str.replace(/\b\S/g, t => t.toUpperCase());
             fieldName.innerText = titleCase(field_name.replace("_"," "))
             const fieldValue = document.createElement("td")
-            fieldValue.innerText = toFixedIfNecessary(parseFloat(data[field_name]),4)
+            if (field_name == "payload_id"){
+                fieldValue.innerText = data[field_name]
+            } else {
+                fieldValue.innerText = toFixedIfNecessary(parseFloat(data[field_name]),4)
+            }
+            
             field.appendChild(fieldValue)
         }
        
