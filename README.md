@@ -21,6 +21,3 @@ yarn install
 yarn dev
 ```
 
-### TODO
-
-- station position reports
