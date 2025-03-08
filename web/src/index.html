@@ -9,13 +9,12 @@
             content: "";
             z-index: 1;
             top: 0;
-            left: 0;
+            right: 0;
             position: absolute;
             pointer-events: none;
             height: 100%;
-            width: 100%;
-            background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0) 75%, rgba(255, 255, 255, 1) 85%, rgba(255, 255, 255, 1) 100%);
-            background-attachment: fixed;
+            width: 200px;
+            background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgb(255, 255, 255) 85%, rgb(255, 255, 255) 100%);
         }
 
         #frames {
@@ -41,6 +40,12 @@
             }
         }
 
+        .plotlyhack {
+            width: 95% !important;
+            margin: auto;
+        }
+        
+        /* hack to stop the 1px gap on retina screens */
         .leaflet-container img.leaflet-tile {
             mix-blend-mode: normal !important;
 
@@ -58,7 +63,7 @@
     </header>
 
     <!-- Begin page content -->
-    <main role="main" class="container gap-4 d-grid ">
+    <main role="main" class="container gap-4 d-grid " style="max-width:2000px">
         <div>
             <div class="row justify-content-center">
                 <h1 class="mt-5">webhorus
@@ -217,28 +222,30 @@
         </div>
         <div class="row g-3">
             <h2>Spectrum</h2>
-            <div id="spectrum" style="width:95%">
+            <div id="spectrum" class="col-md-12 plotlyhack">
             </div>
         </div>
-        <div class="row g-3" style="position:relative; width:80vw">
-            <h2>Frames</h2>
-            <div id="frames" style="white-space:nowrap;overflow-x: auto;scrollbar-width: none;">
+        <div class="row g-3" >
+            <div class="col-md-12" style="position:relative;">
+                <h2>Frames</h2>
+                <div id="frames" style="white-space:nowrap;overflow-x: auto; margin-right: -100000000px; width:100%">
+                </div>
             </div>
         </div>
         <div class="row g-3">
             <h2>Map</h2>
-            <div id="trackMap" style="height: 500px; width: 95%;">
+            <div class="col-md-12" id="trackMap" style="height: 500px;">
             </div>
         </div>
 
         <div class="row g-3">
             <h2>SNR</h2>
-            <div id="snr" style="width:95%">
+            <div id="snr" class="col-md-12 plotlyhack">
             </div>
         </div>
         <div class="row g-3">
             <h2>Plots</h2>
-            <div id="plots" style="width:95%">
+            <div id="plots" class="col-md-12 plotlyhack">
             </div>
         </div>
 

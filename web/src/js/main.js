@@ -84,7 +84,7 @@ globalThis.loadSettings = function () {
     if (localStorage.getItem("tone_spacing")) { document.getElementById("tone_spacing").value = localStorage.getItem("tone_spacing") }
 }
 
-function addFrame(data) {
+globalThis.addFrame = function(data) {
     const frames_div = document.getElementById("frames")
     const card = document.createElement("div")
     card.classList = "card text-dark bg-light me-3"
@@ -117,12 +117,18 @@ function addFrame(data) {
             const titleCase = (str) => str.replace(/\b\S/g, t => t.toUpperCase());
             fieldName.innerText = titleCase(field_name.replace("_", " "))
             const fieldValue = document.createElement("td")
-            if (field_name == "payload_id") {
-                fieldValue.innerText = data[field_name]
+            if (field_name == "latitude" || field_name == "longitude" ){
+                const geoLink = document.createElement("a")
+                geoLink.innerText = toFixedIfNecessary(parseFloat(data[field_name]),4)
+                geoLink.href = `geo:${data["latitude"]},${data["longitude"]}`
+                fieldValue.appendChild(geoLink)
             } else {
-                fieldValue.innerText = toFixedIfNecessary(parseFloat(data[field_name]), 4)
+                if (field_name == "payload_id") {
+                    fieldValue.innerText = data[field_name]
+                } else {
+                    fieldValue.innerText = toFixedIfNecessary(parseFloat(data[field_name]), 4)
+                }
             }
-
             field.appendChild(fieldValue)
         }
 
@@ -227,7 +233,7 @@ globalThis.rx_packet = function (packet, sh_format, stats) {
         })
 
     }
-    addFrame(packet.toJs())
+    globalThis.addFrame(packet.toJs())
     updateMarker(packet.toJs())
     updatePlots(packet.toJs())
 }

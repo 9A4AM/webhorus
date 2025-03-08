@@ -27,6 +27,9 @@ export default defineConfig({
         globalThis: 'window'
     },
     root: resolve(__dirname, 'src'),
+    server: {
+        host: '0.0.0.0'
+    },
     resolve: {
         alias: {
             '~bootstrap': resolve(__dirname, 'node_modules/bootstrap'),
