@@ -11,6 +11,9 @@
     <meta name="apple-mobile-web-app-title" content="webhorus" />
     <title>webhorus</title>
     <style>
+        html, body {
+           height: 100%;
+        }
         #frames:before {
             content: "";
             z-index: 1;
@@ -38,8 +41,10 @@
             /* firefox doesn't support this */
             display: inline-block !important;
         }
+
         .card-body table tr td a {
-            background-color: inherit; /* not sure why bootstrap is even sitting this... */
+            background-color: inherit;
+            /* not sure why bootstrap is even sitting this... */
         }
 
         @starting-style {
@@ -53,7 +58,7 @@
             width: 90% !important;
             margin: auto;
         }
-        
+
         /* hack to stop the 1px gap on retina screens */
         .leaflet-container img.leaflet-tile {
             mix-blend-mode: normal !important;
@@ -63,216 +68,279 @@
         .alert {
             overflow-wrap: anywhere;
         }
+
+        /* .nav-item {
+            padding-left: 10px;
+        } */
+
+        .nav-link {
+            color: black !important;
+            background-color: white !important;
+            padding: 10px !important;
+
+        }
+
+        .nav-link.active {
+            color: white !important;
+            background-color: #0d6efd !important;
+        }
+/* 
+        #navbar .show {
+            background-color: white;
+        }
+         .show .navbar-nav {
+            background-color: white;
+            margin-right: -40px;
+        }
+        .navbar-toggle {
+            background-color: red!important;
+        }
+   */
     </style>
 </head>
 
-<body>
+<body style="height: 100vh; width: 100vw;">
     <header>
 
     </header>
+    <nav class="navbar fixed-top navbar-light navbar-expand-md" style="width: 100vw !important;background-color:white">
 
+        <a class="navbar-brand ps-4" href="#">webhorus</a>
+        <div class="pe-2">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar"
+                aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </div>
+        <div class="collapse navbar-collapse nav-pills justify-content-end  pt-2" id="navbar" style="width: 100vw;">
+            <ul class="navbar-nav mb-2 mb-lg-0" id="myTab" role="tablist" style="background-color:white">
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link active" id="about-tab" data-bs-toggle="tab" data-bs-target="#about-tab-pane"
+                         aria-controls="about-tab-pane" aria-selected="true">Home</a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="config-tab" data-bs-toggle="tab" data-bs-target="#config-tab-pane"  aria-controls="config-tab-pane" aria-selected="false">Config</a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="spectrum-tab" data-bs-toggle="tab" data-bs-target="#spectrum-tab-pane"
+                         aria-controls="spectrum-tab-pane" aria-selected="false" onclick='Plotly.Plots.resize("spectrum")'>Spectrum</a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="frames-tab" data-bs-toggle="tab" data-bs-target="#frames-tab-pane"  aria-controls="frames-tab-pane" aria-selected="false">Frames</a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="map-tab" data-bs-toggle="tab" data-bs-target="#map-tab-pane"  aria-controls="map-tab-pane" aria-selected="false" onclick="trackMap.invalidateSize();">Map</a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="snr-tab" data-bs-toggle="tab" data-bs-target="#snr-tab-pane"  aria-controls="snr-tab-pane" aria-selected="false" onclick='Plotly.Plots.resize("snr")'>SNR</a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="plots-tab" data-bs-toggle="tab" data-bs-target="#plots-tab-pane"  aria-controls="plots-tab-pane" aria-selected="false" onclick='Plotly.Plots.resize("plots")'>Plots</a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="log-tab" data-bs-toggle="tab" data-bs-target="#log-tab-pane" type="a"
+                        role="tab" aria-controls="log-tab-pane" aria-selected="false">Logs</a>
+                </li>
+            </ul>
+
+        </div>
+      
+    </nav>
+    <div style="padding-top:70px; padding-left:10px; padding-right:10px">
+        <div class="progress position-relative">
+            <div id="dbfs" class="progress-bar" role="progressbar" style="width: 0%;">
+                <span id="dbfstext" class="justify-content-center d-flex position-absolute w-100">-999
+                    dBFS</span>
+            </div>
+        </div>
+    </div>
     <!-- Begin page content -->
-    <main role="main" class="container gap-4 d-grid " style="max-width:2000px">
-        <div>
-            <div class="row justify-content-center">
-                <h1 class="mt-5 mb-2">webhorus
-                </h1>
+    <main role="main" class="container gap-4 d-grid " style="max-width:none; padding-top:10px">
+        <div class="tab-content" id="appTabs">
+            <div class="tab-pane show active justify-content-center" id="about-tab-pane" role="tabpanel" tabindex="0">
                 <div class="row mt-3">
                     <div class="col-auto mb-2">
                         <p>
-                            webhorus is an experimental receiver for horusbinary balloon telemetry. Audio in Javascript is very hard to support across multiple devices and platforms.
-                            As such please don't rely on this working reliably. Consider using <a href="https://github.com/projecthorus/horus-gui">Horus-GUI</a> where possible. Ensure receiver testing has been done prior to launching any balloon.
+                            webhorus is an experimental receiver for horusbinary balloon telemetry. Audio in Javascript
+                            is
+                            very hard to support across multiple devices and platforms.
+                            As such please don't rely on this working reliably. Consider using <a
+                                href="https://github.com/projecthorus/horus-gui">Horus-GUI</a> where possible. Ensure
+                            receiver testing has been done prior to launching any balloon.
                         </p>
                         <p>
-                            A writeup on how this project was created is found on <a href="https://sprocketfox.io/xssfox/2025/03/07/webhorus/">my (xssfox) blog</a>.
+                            A writeup on how this project was created is found on <a
+                                href="https://sprocketfox.io/xssfox/2025/03/07/webhorus/">my (xssfox) blog</a>.
                         </p>
-                        <div class="alert alert-warning">Issues have been reported when using Firefox/Gecko based browsers on some Android devices including but not limited to Motorola. It could be related to this bug listed on Mozilla's <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1837578">bugtracker</a>. Users have reported success using Chrome/Chromium based browsers instead.</div>
-                        <button id="audio_start" class="btn btn-primary" onclick="startAudio()"
-                            disabled="true">Loading</button>
+                        <div class="alert alert-warning">Issues have been reported when using Firefox/Gecko based
+                            browsers
+                            on some Android devices including but not limited to Motorola. It could be related to this
+                            bug
+                            listed on Mozilla's <a
+                                href="https://bugzilla.mozilla.org/show_bug.cgi?id=1837578">bugtracker</a>. Users have
+                            reported success using Chrome/Chromium based browsers instead.</div>
+
                     </div>
 
                 </div>
-                <div class="row mt-3 mb-3">
-                    <div class="col mb-2">
-                        <div class="progress position-relative">
-                            <div id="dbfs" class="progress-bar" role="progressbar" style="width: 0%;">
-                                <span id="dbfstext" class="justify-content-center d-flex position-absolute w-100">-999
-                                    dBFS</span>
+            </div>
+            <div class="tab-pane justify-content-center" id="config-tab-pane" role="tabpanel" tabindex="0">
+
+
+                <div class="row align-items-center  ">
+                    <div class="col-md-4">
+                        <div class="col mb-2">
+                            <label class="form-label col-form-label" for="sound_adapter">Sound
+                                input</label>
+                            <select class="form-control form-select" id="sound_adapter" onchange="snd_change()"
+                                placeholder="" disabled>
+                                <option value="placeholder" selected id="snd_ph">Click start first
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="col mb-2">
+                            <label class="form-label col-form-label" for="callsign">Uploader
+                                Callsign</label>
+                            <input class="form-control" id="callsign" placeholder="" value="N0CALL"
+                                onchange="saveSettings()">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="col mb-2">
+                            <label class="form-label col-form-label" for="uploader_radio">Uploader
+                                Radio</label>
+                            <input class="form-control" id="uploader_radio" placeholder="" onchange="saveSettings()">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="col mb-2">
+                            <label class="form-label col-form-label" for="uploader_antenna">Uploader
+                                Antenna</label>
+                            <input class="form-control" id="uploader_antenna" placeholder="" onchange="saveSettings()">
+                        </div>
+                    </div>
+
+
+                    <div class="col-md-4">
+                        <div class="col mb-2">
+                            <label class="form-label col-form-label" for="uploader_lat">Uploader
+                                Latitude</label>
+                            <div class="input-group">
+                                <input class="form-control" id="uploader_lat" placeholder="" onchange="saveSettings()"
+                                    type="number" inputmode="decimal">
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                                    data-bs-target="#mapPickerModal" onclick="geoload()" style="padding-top: 0.5px;">
+                                    &target;
+                                </button>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="accordion">
-                    <div class="accordion-item" id="configMain">
-                        <div class="accordion-header" id="configCard">
-                            <button class="accordion-button" data-bs-toggle="collapse" data-bs-target="#collapseConfig">
-                                <b>Config</b>
-                            </button>
-                        </div>
-                        <div id="collapseConfig" class="collapse show ">
-                            <div class="accordion-body">
-                                <div class="row align-items-center  ">
-                                    <div class="col-md-4">
-                                        <div class="col mb-2">
-                                            <label class="form-label col-form-label" for="sound_adapter">Sound
-                                                input</label>
-                                            <select class="form-control form-select" id="sound_adapter"
-                                                onchange="snd_change()" placeholder="" disabled>
-                                                <option value="placeholder" selected id="snd_ph">Click start first
-                                                </option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="col mb-2">
-                                            <label class="form-label col-form-label" for="callsign">Uploader
-                                                Callsign</label>
-                                            <input class="form-control" id="callsign" placeholder="" value="N0CALL"
-                                                onchange="saveSettings()">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="col mb-2">
-                                            <label class="form-label col-form-label" for="uploader_radio">Uploader
-                                                Radio</label>
-                                            <input class="form-control" id="uploader_radio" placeholder=""
-                                                onchange="saveSettings()">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="col mb-2">
-                                            <label class="form-label col-form-label" for="uploader_antenna">Uploader
-                                                Antenna</label>
-                                            <input class="form-control" id="uploader_antenna" placeholder=""
-                                                onchange="saveSettings()">
-                                        </div>
-                                    </div>
-
-
-                                    <div class="col-md-4">
-                                        <div class="col mb-2">
-                                            <label class="form-label col-form-label" for="uploader_lat">Uploader
-                                                Latitude</label>
-                                            <div class="input-group">
-                                                <input class="form-control" id="uploader_lat" placeholder=""
-                                                    onchange="saveSettings()" type="number" inputmode="decimal">
-                                                <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                                                    data-bs-target="#mapPickerModal" onclick="geoload()" style="padding-top: 0.5px;">
-                                                    &target;
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="col mb-2">
-                                            <label class="form-label col-form-label" for="uploader_lon">Uploader
-                                                Longitude</label>
-                                            <div class="input-group">
-                                                <input class="form-control" id="uploader_lon" placeholder=""
-                                                    onchange="saveSettings()" type="number" inputmode="decimal">
-                                                <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                                                    data-bs-target="#mapPickerModal" style="padding-top: 0.5px;">
-                                                    &target;
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="col mb-2">
-                                            <label class="form-label col-form-label" for="uploader_alt">Uploader
-                                                Altitude</label>
-                                            <input class="form-control" id="uploader_alt" placeholder=""
-                                                onchange="saveSettings()" type="number" inputmode="decimal" value="0">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="col mb-2">
-                                            <label class="form-label col-form-label" for="dial">Dial Frequency
-                                                (MHz)</label>
-                                            <input class="form-control" id="dial" placeholder=""
-                                                onchange="saveSettings()" type="number" inputmode="decimal">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="col mb-2">
-                                            <label class="form-label col-form-label" for="tone_spacing">Tone
-                                                Spacing</label>
-                                            <input class="form-control" id="tone_spacing" placeholder=""
-                                                onchange="updateToneSpacing()" type="number" inputmode="decimal"
-                                                value="270">
-                                        </div>
-                                    </div>
-                                    <div class="row align-middle">
-                                        <div class="col mb-2">
-
-
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" checked
-                                                    id="upload_sondehub" onclick="saveSettings()"
-                                                    onchange="saveSettings()">
-                                                <label class="form-check-label " for="upload_sondehub">Upload to
-                                                    SondeHub</label>
-
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row align-middle">
-                                        <div class="col mb-2">
-
-
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="uploader_position"
-                                                    onclick="saveSettings()" onchange="saveSettings()">
-                                                <label class="form-check-label " for="uploader_position">Upload station
-                                                    position</label>
-
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                </div>
+                    <div class="col-md-4">
+                        <div class="col mb-2">
+                            <label class="form-label col-form-label" for="uploader_lon">Uploader
+                                Longitude</label>
+                            <div class="input-group">
+                                <input class="form-control" id="uploader_lon" placeholder="" onchange="saveSettings()"
+                                    type="number" inputmode="decimal">
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                                    data-bs-target="#mapPickerModal" style="padding-top: 0.5px;">
+                                    &target;
+                                </button>
                             </div>
                         </div>
                     </div>
+                    <div class="col-md-4">
+                        <div class="col mb-2">
+                            <label class="form-label col-form-label" for="uploader_alt">Uploader
+                                Altitude</label>
+                            <input class="form-control" id="uploader_alt" placeholder="" onchange="saveSettings()"
+                                type="number" inputmode="decimal" value="0">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="col mb-2">
+                            <label class="form-label col-form-label" for="dial">Dial Frequency
+                                (MHz)</label>
+                            <input class="form-control" id="dial" placeholder="" onchange="saveSettings()" type="number"
+                                inputmode="decimal">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="col mb-2">
+                            <label class="form-label col-form-label" for="tone_spacing">Tone
+                                Spacing</label>
+                            <input class="form-control" id="tone_spacing" placeholder="" onchange="updateToneSpacing()"
+                                type="number" inputmode="decimal" value="270">
+                        </div>
+                    </div>
+                    <div class="row align-middle">
+                        <div class="col mb-2">
+
+
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" checked id="upload_sondehub"
+                                    onclick="saveSettings()" onchange="saveSettings()">
+                                <label class="form-check-label " for="upload_sondehub">Upload to
+                                    SondeHub</label>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row align-middle">
+                        <div class="col mb-2">
+
+
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="uploader_position"
+                                    onclick="saveSettings()" onchange="saveSettings()">
+                                <label class="form-check-label " for="uploader_position">Upload station
+                                    position</label>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div >
+                            <button id="audio_start" class="btn btn-primary col-4" onclick="startAudio()"
+                                disabled="true">Loading</button>
+
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane justify-content-center" id="spectrum-tab-pane" role="tabpanel" tabindex="0">
+                <div id="spectrum" class="col-md-12 plotlyhack">
+                </div>
+            </div>
+            <div class="tab-pane justify-content-center" id="frames-tab-pane" role="tabpanel" tabindex="0">
+                <div class="col-md-12" style="position:relative;">
+                    <div id="frames"
+                        style="white-space:nowrap;overflow-x: auto; margin-right: -100000000px; width:100%">
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane justify-content-center" id="map-tab-pane" role="tabpanel" tabindex="0">
+                <div class="col-md-12" id="trackMap" style="height:100vh; width:100vw; position:fixed; left:0; top:90px;">
+                </div>
+            </div>
+
+            <div class="tab-pane justify-content-center" id="snr-tab-pane" role="tabpanel" tabindex="0">
+                <div id="snr" class="col-md-12 plotlyhack">
+                </div>
+            </div>
+            <div class="tab-pane justify-content-center" id="plots-tab-pane" role="tabpanel" tabindex="0">
+                <div id="plots" class="col-md-12 plotlyhack">
+                </div>
+            </div>
+
+            <div class="tab-pane justify-content-center" id="log-tab-pane" role="tabpanel" tabindex="0">
+                <div id="rx_log" class="col-md-12">
+
                 </div>
             </div>
         </div>
-        <div class="row g-3">
-            <h2>Spectrum</h2>
-            <div id="spectrum" class="col-md-12 plotlyhack">
-            </div>
-        </div>
-        <div class="row g-3" >
-            <div class="col-md-12" style="position:relative;">
-                <h2>Frames</h2>
-                <div id="frames" style="white-space:nowrap;overflow-x: auto; margin-right: -100000000px; width:100%">
-                </div>
-            </div>
-        </div>
-        <div class="row g-3">
-            <h2>Map</h2>
-            <div class="col-md-12" id="trackMap" style="height: 500px;">
-            </div>
-        </div>
 
-        <div class="row g-3">
-            <h2>SNR</h2>
-            <div id="snr" class="col-md-12 plotlyhack">
-            </div>
-        </div>
-        <div class="row g-3">
-            <h2>Plots</h2>
-            <div id="plots" class="col-md-12 plotlyhack">
-            </div>
-        </div>
 
-        <div class="row g-3">
-            <h2>RX Log</h2>
-            <p>Logs!</p>
-            <div id="rx_log" class="col-md-12">
-
-            </div>
-        </div>
 
 
 

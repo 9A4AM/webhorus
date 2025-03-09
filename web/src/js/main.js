@@ -62,17 +62,17 @@ function loadMapPicker() {
     log_entry(`Map picker loaded`, "light")
 }
 
-var trackMap;
 var markers = {};
 var tracks = {};
 
 function loadTrackMap() {
-    trackMap = L.map('trackMap', {}).setView([-37.8136, 144.9631], 6);
+    globalThis.trackMap = L.map('trackMap', {}).setView([-37.8136, 144.9631], 6);
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    }).addTo(trackMap);
+    }).addTo(globalThis.trackMap);
     log_entry(`Track map loaded`, "light")
+    trackMap.invalidateSize();
 }
 
 import { loadPyodide } from "pyodide";
@@ -169,17 +169,17 @@ function updateMarker(data) {
     } else {
         markers[data.payload_id] = L.circleMarker(position)
         markers[data.payload_id].bindTooltip(data.payload_id);
-        markers[data.payload_id].addTo(trackMap);
+        markers[data.payload_id].addTo(globalThis.trackMap);
     }
 
     // update tracks
     if (!(data.payload_id in tracks)) {
-        tracks[data.payload_id] = L.polyline([position], { color: 'red' }).addTo(trackMap);
+        tracks[data.payload_id] = L.polyline([position], { color: 'red' }).addTo(globalThis.trackMap);
     } else {
         tracks[data.payload_id].addLatLng(position)
     }
 
-    trackMap.panTo(position);
+    globalThis.trackMap.panTo(position);
     log_entry(`Track map updated`, "light")
 }
 
@@ -306,7 +306,6 @@ globalThis.Plotly.newPlot('snr', [{
     x: [],
     mode: 'lines'
 }], {
-    height: 200,
     autosize: true,
     margin: {
         l: 35,
@@ -328,7 +327,6 @@ globalThis.Plotly.newPlot('snr', [{
 }, { responsive: true , staticPlot: true});
 
 var spectrum_layout = {
-    height: 300,
     autosize: true,
     margin: {
         l: 45,
@@ -359,7 +357,6 @@ globalThis.Plotly.newPlot('spectrum', [{
 }], spectrum_layout, { responsive: true , staticPlot: true});
 
 globalThis.Plotly.newPlot('plots', [], {
-    height: 500,
     autosize: true,
     margin: {
         l: 35,
@@ -690,6 +687,13 @@ function log_entry(message, level) {
     log_entry.classList.add("alert")
     rx_log.prepend(log_entry)
 }
+
+// plotly auto resize fix
+setInterval(()=>{
+    globalThis.Plotly.update("spectrum")
+    globalThis.Plotly.update("snr")
+    globalThis.Plotly.update("plots")
+}, 50)
 
 
 
