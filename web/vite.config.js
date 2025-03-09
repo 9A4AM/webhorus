@@ -1,7 +1,8 @@
 import { dirname, join, resolve } from "path";
 import { defineConfig } from 'vite'
-import { viteStaticCopy } from 'vite-plugin-static-copy'
 import { fileURLToPath } from "url";
+import copy from 'rollup-plugin-copy'
+import { VitePWA } from 'vite-plugin-pwa'
 
 const PYODIDE_EXCLUDE = [
     "!**/*.{md,html}",
@@ -11,17 +12,13 @@ const PYODIDE_EXCLUDE = [
 ];
 
 export function viteStaticCopyPyodide() {
-    const pyodideDir = dirname(fileURLToPath(import.meta.resolve("pyodide")));
-    return viteStaticCopy({
-        targets: [
-            {
+    const pyodideDir = "node_modules/pyodide";
+    return  {
                 src: [join(pyodideDir, "*")].concat(PYODIDE_EXCLUDE),
-                dest: "assets/node_modules/pyodide",
-            },
-        ],
-    });
+                dest: "src/dist/assets/",
+            }
+        
 }
-
 export default defineConfig({
     define: {
         globalThis: 'window'
@@ -51,7 +48,7 @@ export default defineConfig({
             treeshake: false,
             output: {
                 //'inlineDynamicImports': false,
-                'preserveModules': true,
+                //'preserveModules': true,
                 'preserveModulesRoot': 'src',
 
             },
@@ -67,39 +64,82 @@ export default defineConfig({
         exclude: ["pyodide", "loadPyodide"],
         noDiscovery: true
     },
-    plugins: [viteStaticCopyPyodide(), viteStaticCopy(
-        {
-            targets: [
-                {
-                    src: 'assets/*',
-                    dest: "assets",
-                },
-            ],
-        })
-        , viteStaticCopy(
+    plugins: [
+        copy(
             {
                 targets: [
-                    {
-                        src: 'js/audio.js',
-                        dest: "js",
-                    },
+            
+                    viteStaticCopyPyodide()
                 ],
-            }), viteStaticCopy(
-                {
-                    targets: [
+                verbose: true,
+                hook: 'writeBundle'
+            }
+        ), 
+        VitePWA(
+            {
+                registerType: 'autoUpdate',
+                injectRegister: 'auto',
+                devOptions: {
+                    enabled: true,
+                    type: 'module',
+                },
+                includeAssets: ["**/*"],
+                workbox: {
+                    globPatterns: ["**/*.{js,css,html,png,whl,wasm,zip,py,ico,svg,json}"],
+                    globIgnores: ["sw.js","workbox-*.js","assets/*.whl"],
+                    maximumFileSizeToCacheInBytes: 20 * 1024 * 1024,
+                    runtimeCaching: [
                         {
-                            src: 'py/*',
-                            dest: "py",
+                          urlPattern: /^https:\/\/raw.githubusercontent.com\/projecthorus\/horusdemodlib\/master\/.*/,
+                          handler: "NetworkFirst",
+                          options: {
+                            cacheName: "horus-custom-cache",
+                          },
                         },
+                      ],
+                },
+                manifest: {
+                    "name": "webhorus",
+                    "short_name": "webhorus",
+                    "description": "web based version of horus-ui",
+                    "icons": [
+                      {
+                        "src": "web-app-manifest-192x192.png",
+                        "sizes": "192x192",
+                        "type": "image/png",
+                        "purpose": "maskable"
+                      },
+                      {
+                        "src": "web-app-manifest-512x512.png",
+                        "sizes": "512x512",
+                        "type": "image/png",
+                        "purpose": "maskable"
+                      },
+                      {
+                        "src": "web-app-manifest-512x512.png",
+                        "sizes": "512x512",
+                        "type": "image/png",
+                        "purpose": "any"
+                      }
                     ],
-                }), viteStaticCopy(
-                    {
-                        targets: [
-                            {
-                                src: '../node_modules/leaflet/dist/images/*',
-                                dest: "",
-                            },
-                        ],
-                    })
+                    "screenshots":[
+                        {
+                            "src": "pwa_wide.png",
+                            "sizes": "2170x1600",
+                            form_factor: "wide"
+                        },
+                        {
+                            "src": "pwa_tall.png",
+                            "sizes": "1500x2668",
+                            "form_factor": "narrow"
+                        }
+                    ],
+                    "theme_color": "#5DB2E0",
+                    "background_color": "#5DB2E0",
+                    "display": "standalone"
+                  }
+            }
+        )
     ]
-})
+}
+)

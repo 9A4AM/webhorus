@@ -257,6 +257,8 @@ globalThis.rx_packet = function (packet, sh_format, stats) {
                 )
             }
 
+        }).catch((error) => {
+            log_entry("Error posting to sondehub: " + error.message,"danger")
         })
 
     } else {
@@ -674,7 +676,9 @@ function report_position() {
             response.text().then(body => {
                 log_entry("Reported station info: " + body, "info")
             })
-        })
+        }).catch((error) => {
+            log_entry("Error posting to sondehub: " + error.message,"danger")
+          })
     }
 }
 
@@ -693,9 +697,3 @@ globalThis.loadSettings();
 loadMapPicker()
 loadTrackMap()
 init_python();
-
-
-
-
-
-

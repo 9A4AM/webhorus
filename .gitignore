@@ -8,6 +8,7 @@ payload_id_list.txt
 custom_field_list.json
 web/webhorus-*
 webhorus/setup.py
+web/src/dev-dist
 
 web/.yarn/*
 .yarn/*
