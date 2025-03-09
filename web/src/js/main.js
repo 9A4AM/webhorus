@@ -18,6 +18,7 @@ var pickerMarker;
 var mapPickerMap;
 globalThis.geoload = function(){
     function browserPosition(position){
+        log_entry(`Received user location`, "light")
         if (pickerMarker == undefined){
             pickerMarker = L.marker([position.coords.latitude, position.coords.longitude]).addTo(mapPickerMap);
             mapPickerMap.setView([position.coords.latitude, position.coords.longitude],12)
@@ -58,6 +59,7 @@ function loadMapPicker() {
         pickerMarker.remove()
         pickerMarker = undefined
     }
+    log_entry(`Map picker loaded`, "light")
 }
 
 var trackMap;
@@ -70,7 +72,7 @@ function loadTrackMap() {
         maxZoom: 19,
         attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(trackMap);
-
+    log_entry(`Track map loaded`, "light")
 }
 
 import { loadPyodide } from "pyodide";
@@ -87,6 +89,7 @@ globalThis.saveSettings = function () {
     localStorage.setItem("uploader_position", document.getElementById("uploader_position").checked)
     localStorage.setItem("dial", document.getElementById("dial").value)
     localStorage.setItem("tone_spacing", document.getElementById("tone_spacing").value)
+    log_entry(`Saved settings`, "light")
     report_position()
 }
 
@@ -101,6 +104,7 @@ globalThis.loadSettings = function () {
     if (localStorage.getItem("uploader_position")) { document.getElementById("uploader_position").checked = localStorage.getItem("uploader_position") }
     if (localStorage.getItem("dial")) { document.getElementById("dial").value = localStorage.getItem("dial") }
     if (localStorage.getItem("tone_spacing")) { document.getElementById("tone_spacing").value = localStorage.getItem("tone_spacing") }
+    log_entry(`Loaded settings`, "light")
 }
 
 globalThis.addFrame = function(data) {
@@ -175,6 +179,7 @@ function updateMarker(data) {
     }
 
     trackMap.panTo(position);
+    log_entry(`Track map updated`, "light")
 }
 
 globalThis.rx_packet = function (packet, sh_format, stats) {
@@ -182,6 +187,8 @@ globalThis.rx_packet = function (packet, sh_format, stats) {
 
     var freq_est = stats.toJs().f_est
     var freq_mean = freq_est.reduce((a, b) => a + b, 0) / freq_est.length
+
+    log_entry(`Clock offset(ppm): ${stats.toJs().clock_offset}`, "light")
 
     var final_freq
 
@@ -201,7 +208,7 @@ globalThis.rx_packet = function (packet, sh_format, stats) {
 
         // Mark will want me to do some peak hold stuff here, but honestly that just seems like too much work.
         sh_packet['snr'] = stats.toJs().snr_est
-
+        log_entry(`Posting telm.`, "light")
         const response = fetch("https://api.v2.sondehub.org/amateur/telemetry", {
             method: "PUT",
             headers: {
@@ -251,6 +258,8 @@ globalThis.rx_packet = function (packet, sh_format, stats) {
 
         })
 
+    } else {
+        log_entry(`No SondeHub format so not posting.`, "light")
     }
     globalThis.addFrame(packet.toJs())
     updateMarker(packet.toJs())
@@ -392,6 +401,7 @@ globalThis.updateStats = function (stats) {
 globalThis.updateToneSpacing = function () {
     var tone_spacing = parseInt(document.getElementById("tone_spacing").value)
     if (isFinite(tone_spacing)) {
+        log_entry(`Updating tone spacing: ${tone_spacing}`, "light")
         globalThis.update_tone_spacing(tone_spacing)
     }
     saveSettings()
@@ -400,7 +410,7 @@ globalThis.updateToneSpacing = function () {
 var VERSION
 
 async function init_python() {
-
+    log_entry("Starting python load", "light")
     const pyodide = await loadPyodide();
 
     await Promise.all([
@@ -416,8 +426,10 @@ async function init_python() {
         pyodide.loadPackage("./assets/certifi-2024.12.14-py3-none-any.whl"),
         pyodide.loadPackage("./assets/webhorus-0.1.0-cp312-cp312-pyodide_2024_0_wasm32.whl")
     ]);
+    log_entry("Python packages loaded", "light")
 
     pyodide.runPython(await (await fetch("/py/main.py")).text());
+    log_entry("main.py loaded", "light")
 
     //globalThis.nin =  pyodide.runPython("to_js(horus_demod.nin)")
     globalThis.write_audio = pyodide.runPython("write_audio")
@@ -427,6 +439,7 @@ async function init_python() {
     document.getElementById("audio_start").removeAttribute("disabled");
     document.getElementById("audio_start").innerText = "Start"
     VERSION = pyodide.runPython("VERSION")
+    log_entry(`webhorus ready. version: ${VERSION}`, "light")
 }
 
 
@@ -454,6 +467,7 @@ globalThis.snd_change = async function () {
 
         }
     }
+    log_entry(`Changing sound device: ${JSON.stringify(constraint)}`, "light")
     startAudio(constraint)
     saveSettings()
 }
@@ -466,7 +480,7 @@ var horusNode
 var activeAnalyser
 
 globalThis.startAudio = async function (constraint) {
-
+    log_entry(`Starting audio`, "light")
     globalThis.audioContext = new AudioContext();
     await audioContext.audioWorklet.addModule('/js/audio.js')
     console.log("audio is starting up ...");
@@ -477,6 +491,7 @@ globalThis.startAudio = async function (constraint) {
         var audio_constraint = constraint
     }
     const audio_constraint_filters = await add_constraints(audio_constraint)
+    log_entry(`Audio constraints: ${JSON.stringify(audio_constraint_filters)}`, "light")
 
     navigator.mediaDevices.getUserMedia(audio_constraint_filters).then((stream) => {
         if (constraint == undefined) {
@@ -497,6 +512,7 @@ globalThis.startAudio = async function (constraint) {
                 }
                 document.getElementById("sound_adapter").value = audio_constraint_filters.audio.deviceId
                 if (saved_device && device_id_list.includes(saved_device)) {
+                    log_entry(`Found saved sound adapter - changing to: ${saved_device}`, "light")
                     document.getElementById("sound_adapter").value = saved_device
                     snd_change()
                 } else {
@@ -505,6 +521,7 @@ globalThis.startAudio = async function (constraint) {
                 
             })
         } else {
+            log_entry(`Selecting sound device: ${audio_constraint_filters.audio.deviceId}`, "light")
             document.getElementById("sound_adapter").value = audio_constraint_filters.audio.deviceId
             start_microphone(stream);
         }
@@ -543,14 +560,16 @@ globalThis.startAudio = async function (constraint) {
 
 
     function start_microphone(stream) {
-
+        
         document.getElementById("audio_start").setAttribute("disabled", "disabled");
         document.getElementById("audio_start").classList.add("btn-outline-success")
         document.getElementById("audio_start").innerText = "Running"
         if (globalThis.microphone_stream) {
+            log_entry(`Clearing existing input stream.`, "light")
             globalThis.microphone_stream.mediaStream.getTracks()[0].stop()
             globalThis.microphone_stream.disconnect()
         }
+        log_entry(`Starting input stream`, "light")
         try {
             globalThis.microphone_stream = audioContext.createMediaStreamSource(stream);
         } catch (err) {
@@ -558,7 +577,11 @@ globalThis.startAudio = async function (constraint) {
             log_entry("Error opening audio device. For firefox users - ensure your default sound device is set to 48,000 sample rate in your OS settings", "danger")
         }
 
+        log_entry(`Audio context sample rate: ${audioContext.sampleRate}`, "light")
+
         globalThis.nin = globalThis.start_modem(audioContext.sampleRate)
+
+        log_entry(`Initial nin: ${globalThis.nin}`, "light")
 
         horusNode = new AudioWorkletNode(audioContext, 'horus', {
             processorOptions: {
@@ -606,6 +629,7 @@ globalThis.startAudio = async function (constraint) {
                     spectrum_data,
                     spectrum_layout)
             }, 200)
+            log_entry(`FFT Started`, "light")
 
 
 
@@ -638,6 +662,7 @@ function report_position() {
             "uploader_antenna": document.getElementById("uploader_antenna").value,
             "mobile": false
         }
+        log_entry(`Reporting station position ${lat},${lon},${alt}`, "light")
         const response = fetch("https://api.v2.sondehub.org/amateur/listeners", {
             method: "PUT",
             headers: {
