@@ -9,9 +9,26 @@ import * as Plotly from "plotly.js-dist-min";
 
 import "leaflet";
 
-var mapPickerMap;
 
 const fftSize = 16384
+
+var picked = false
+
+var pickerMarker;
+var mapPickerMap;
+globalThis.geoload = function(){
+    function browserPosition(position){
+        if (pickerMarker == undefined){
+            pickerMarker = L.marker([position.coords.latitude, position.coords.longitude]).addTo(mapPickerMap);
+            mapPickerMap.setView([position.coords.latitude, position.coords.longitude],12)
+        }
+    }
+
+    if (navigator.geolocation && pickerMarker == undefined) {
+        navigator.geolocation.getCurrentPosition(browserPosition);
+    }
+}
+
 
 function loadMapPicker() {
     mapPickerMap = L.map('location_picker', {}).setView([-37.8136, 144.9631], 6);
@@ -24,20 +41,22 @@ function loadMapPicker() {
         mapPickerMap.invalidateSize();
     });
 
-    var marker;
+    
     mapPickerMap.on('click', function (e) {
-        if (marker) {
-            mapPickerMap.removeLayer(marker);
+        if (pickerMarker) {
+            mapPickerMap.removeLayer(pickerMarker);
         }
-        marker = L.marker(e.latlng).addTo(mapPickerMap);
+        pickerMarker = L.marker(e.latlng).addTo(mapPickerMap);
     });
 
     globalThis.saveLocation = function () {
-        if (marker) {
-            document.getElementById("uploader_lat").value = marker.getLatLng().lat
-            document.getElementById("uploader_lon").value = marker.getLatLng().lng
+        if (pickerMarker) {
+            document.getElementById("uploader_lat").value = pickerMarker.getLatLng().lat
+            document.getElementById("uploader_lon").value = pickerMarker.getLatLng().lng
             globalThis.saveSettings()
         }
+        pickerMarker.remove()
+        pickerMarker = undefined
     }
 }
 
