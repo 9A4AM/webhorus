@@ -116,30 +116,30 @@
             <ul class="navbar-nav mb-2 mb-lg-0" id="myTab" role="tablist" style="background-color:white">
                 <li class="nav-item" role="presentation">
                     <a class="nav-link active" id="about-tab" data-bs-toggle="tab" data-bs-target="#about-tab-pane"
-                         aria-controls="about-tab-pane" aria-selected="true">Home</a>
+                         aria-controls="about-tab-pane" aria-selected="true" onclick='document.getElementById("navbar").classList.remove("show")'>Home</a>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <a class="nav-link" id="config-tab" data-bs-toggle="tab" data-bs-target="#config-tab-pane"  aria-controls="config-tab-pane" aria-selected="false">Config</a>
+                    <a class="nav-link" id="config-tab" data-bs-toggle="tab" data-bs-target="#config-tab-pane"  onclick='document.getElementById("navbar").classList.remove("show")' aria-controls="config-tab-pane" aria-selected="false">Config</a>
                 </li>
                 <li class="nav-item" role="presentation">
                     <a class="nav-link" id="spectrum-tab" data-bs-toggle="tab" data-bs-target="#spectrum-tab-pane"
-                         aria-controls="spectrum-tab-pane" aria-selected="false" onclick='Plotly.Plots.resize("spectrum")'>Spectrum</a>
+                         aria-controls="spectrum-tab-pane" aria-selected="false" onclick='Plotly.Plots.resize("spectrum");document.getElementById("navbar").classList.remove("show")'>Spectrum</a>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <a class="nav-link" id="frames-tab" data-bs-toggle="tab" data-bs-target="#frames-tab-pane"  aria-controls="frames-tab-pane" aria-selected="false">Frames</a>
+                    <a class="nav-link" id="frames-tab" data-bs-toggle="tab" data-bs-target="#frames-tab-pane"  aria-controls="frames-tab-pane" aria-selected="false" onclick='document.getElementById("navbar").classList.remove("show")'>Frames</a>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <a class="nav-link" id="map-tab" data-bs-toggle="tab" data-bs-target="#map-tab-pane"  aria-controls="map-tab-pane" aria-selected="false" onclick="trackMap.invalidateSize();">Map</a>
+                    <a class="nav-link" id="map-tab" data-bs-toggle="tab" data-bs-target="#map-tab-pane"  aria-controls="map-tab-pane" aria-selected="false" onclick='trackMap.invalidateSize();document.getElementById("navbar").classList.remove("show");'>Map</a>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <a class="nav-link" id="snr-tab" data-bs-toggle="tab" data-bs-target="#snr-tab-pane"  aria-controls="snr-tab-pane" aria-selected="false" onclick='Plotly.Plots.resize("snr")'>SNR</a>
+                    <a class="nav-link" id="snr-tab" data-bs-toggle="tab" data-bs-target="#snr-tab-pane"  aria-controls="snr-tab-pane" aria-selected="false" onclick='Plotly.Plots.resize("snr");document.getElementById("navbar").classList.remove("show")'>SNR</a>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <a class="nav-link" id="plots-tab" data-bs-toggle="tab" data-bs-target="#plots-tab-pane"  aria-controls="plots-tab-pane" aria-selected="false" onclick='Plotly.Plots.resize("plots")'>Plots</a>
+                    <a class="nav-link" id="plots-tab" data-bs-toggle="tab" data-bs-target="#plots-tab-pane"  aria-controls="plots-tab-pane" aria-selected="false" onclick='Plotly.Plots.resize("plots");document.getElementById("navbar").classList.remove("show")'>Plots</a>
                 </li>
                 <li class="nav-item" role="presentation">
                     <a class="nav-link" id="log-tab" data-bs-toggle="tab" data-bs-target="#log-tab-pane" type="a"
-                        role="tab" aria-controls="log-tab-pane" aria-selected="false">Logs</a>
+                        role="tab" aria-controls="log-tab-pane" aria-selected="false" onclick='document.getElementById("navbar").classList.remove("show")'>Logs</a>
                 </li>
             </ul>
 
