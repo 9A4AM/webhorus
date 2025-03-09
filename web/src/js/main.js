@@ -158,6 +158,7 @@ globalThis.addFrame = function(data) {
     }
 
     frames_div.prepend(card)
+    document.title = "webhorus - " + data['payload_id']
 }
 
 function updateMarker(data) {
@@ -322,7 +323,7 @@ globalThis.Plotly.newPlot('snr', [{
             include: [-2, 20]
         }
     }
-}, { responsive: true });
+}, { responsive: true , staticPlot: true});
 
 var spectrum_layout = {
     height: 300,
@@ -353,7 +354,7 @@ globalThis.Plotly.newPlot('spectrum', [{
     y: [],
     x: [],
     mode: 'lines'
-}], spectrum_layout, { responsive: true });
+}], spectrum_layout, { responsive: true , staticPlot: true});
 
 globalThis.Plotly.newPlot('plots', [], {
     height: 500,
