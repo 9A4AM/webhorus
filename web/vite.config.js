@@ -80,16 +80,9 @@ export default defineConfig({
                 registerType: 'autoUpdate',
                 injectRegister: 'auto',
                 devOptions: {
-                    enabled: false,
+                    enabled: true,
                     type: 'module',
                 },
-                id: "/",
-                launch_handler: ["auto"],
-                orientation: "any",
-                "categories": ["utilities", "weather"],
-                "dir": "ltr",
-                "prefer_related_aplications": false,
-                includeAssets: ["**/*"],
                 workbox: {
                     globPatterns: ["**/*.{js,css,html,png,whl,wasm,zip,py,ico,svg,json}"],
                     globIgnores: ["sw.js","workbox-*.js","assets/*.whl"],
@@ -108,6 +101,13 @@ export default defineConfig({
                     "name": "webhorus",
                     "short_name": "webhorus",
                     "description": "web based version of horus-ui",
+                    id: "/",
+                    launch_handler: ["auto"],
+                    orientation: "any",
+                    "categories": ["utilities", "weather"],
+                    "dir": "ltr",
+                    "prefer_related_aplications": false,
+                    includeAssets: ["**/*"],
                     "icons": [
                       {
                         "src": "web-app-manifest-192x192.png",
