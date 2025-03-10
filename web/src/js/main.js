@@ -308,15 +308,24 @@ globalThis.Plotly.newPlot('snr', [{
 }], {
     autosize: true,
     margin: {
-        l: 35,
+        l: 20,
         r: 0,
-        b: 30,
-        t: 0,
+        b: 60,
+        t: 5,
         pad: 0
     },
+    title: {
+        text: 'SNR (dB)',
+        font: {
+            size: "9"
+        },
+        yref: "paper",
+        yanchor: "top",
+        
+    },
     yaxis: {
-        title: {
-            text: 'SNR (dB)',
+        tickfont: {
+            size: "9"
         },
         autorange: true,
         range: [-2, 20],
@@ -329,19 +338,27 @@ globalThis.Plotly.newPlot('snr', [{
 var spectrum_layout = {
     autosize: true,
     margin: {
-        l: 45,
+        l: 20,
         r: 0,
         b: 30,
-        t: 0,
+        t: 5,
         pad: 0
     },
-    yaxis: {
-        title: {
-            text: 'dB',
+    title: {
+        text: 'Audio Spectrum (dB)',
+        font: {
+            size: "9"
         },
+        yref: "paper",
+        yanchor: "top",
+    },
+    yaxis: {
         type: 'log',
         autorange: "reversed",
         tickprefix: "-",
+        tickfont: {
+            size: "9"
+        },
         autorangeoptions: {
             include: [60, 150],
             clipmax: 150,
@@ -611,8 +628,8 @@ globalThis.startAudio = async function (constraint) {
             const step = (audioContext.sampleRate / 2) / globalThis.bufferLength
             const x_values = [...Array(globalThis.bufferLength).keys()].map((x) => (x + 1) * step)
 
-            // get closest index to 5k hz to limit plot size
-            globalThis.max_index = x_values.reduce((prev, curr, index) => { if (curr < 5000) { return index } else { return prev } }, 0)
+            // get closest index to 4k hz to limit plot size
+            globalThis.max_index = x_values.reduce((prev, curr, index) => { if (curr < 4000) { return index } else { return prev } }, 0)
             globalThis.filtered_x_values = x_values.slice(0, globalThis.max_index)
 
             if (globalThis.analyserUpdate) {

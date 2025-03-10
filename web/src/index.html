@@ -11,9 +11,11 @@
     <meta name="apple-mobile-web-app-title" content="webhorus" />
     <title>webhorus</title>
     <style>
-        html, body {
-           height: 100%;
+        html,
+        body {
+            height: 100%;
         }
+
         #frames:before {
             content: "";
             z-index: 1;
@@ -55,7 +57,7 @@
         }
 
         .plotlyhack {
-            width: 90% !important;
+            width: 95% !important;
             margin: auto;
         }
 
@@ -76,86 +78,85 @@
         .nav-link {
             color: black !important;
             background-color: white !important;
-            padding: 10px !important;
-
+            padding-left: 10px !important;
+            padding-right: 10px !important;
         }
 
         .nav-link.active {
             color: white !important;
             background-color: #0d6efd !important;
         }
-/* 
-        #navbar .show {
-            background-color: white;
-        }
-         .show .navbar-nav {
-            background-color: white;
-            margin-right: -40px;
-        }
-        .navbar-toggle {
-            background-color: red!important;
-        }
-   */
     </style>
 </head>
 
-<body style="height: 100vh; width: 100vw;">
+<body style="height: 100vh;width:100vw ">
     <header>
 
     </header>
     <nav class="navbar fixed-top navbar-light navbar-expand-md" style="width: 100vw !important;background-color:white">
+        <div class="container-flex" style="width:100vw">
+            <div class="row">
+                <div class="col-auto">
+                    <a class="navbar-brand ps-4" href="#">webhorus</a>
+                    <button id="audio_start" class="btn btn-primary" onclick="startAudio()"
+                        disabled="true">Loading</button>
+                </div>
+                <div class="col-auto ms-auto  pe-4">
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar"
+                        aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                </div>
+                <div class="collapse navbar-collapse nav-pills col-auto justify-content-end pe-4" id="navbar">
+                    <ul class="navbar-nav  mb-lg-0" id="myTab" role="tablist" style="background-color:white">
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link active" id="about-tab" data-bs-toggle="tab"
+                                data-bs-target="#about-tab-pane" aria-controls="about-tab-pane" aria-selected="true"
+                                onclick='document.getElementById("navbar").classList.remove("show")'>Home</a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="config-tab" data-bs-toggle="tab" data-bs-target="#config-tab-pane"
+                                onclick='document.getElementById("navbar").classList.remove("show")'
+                                aria-controls="config-tab-pane" aria-selected="false">Config</a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="frames-tab" data-bs-toggle="tab" data-bs-target="#frames-tab-pane"
+                                aria-controls="frames-tab-pane" aria-selected="false"
+                                onclick='document.getElementById("navbar").classList.remove("show")'>Receive</a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="map-tab" data-bs-toggle="tab" data-bs-target="#map-tab-pane"
+                                aria-controls="map-tab-pane" aria-selected="false"
+                                onclick='trackMap.invalidateSize();document.getElementById("navbar").classList.remove("show");'>Map</a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="plots-tab" data-bs-toggle="tab" data-bs-target="#plots-tab-pane"
+                                aria-controls="plots-tab-pane" aria-selected="false"
+                                onclick='Plotly.Plots.resize("plots");document.getElementById("navbar").classList.remove("show")'>Plots</a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="log-tab" data-bs-toggle="tab" data-bs-target="#log-tab-pane"
+                                type="a" role="tab" aria-controls="log-tab-pane" aria-selected="false"
+                                onclick='document.getElementById("navbar").classList.remove("show")'>Logs</a>
+                        </li>
+                    </ul>
 
-        <a class="navbar-brand ps-4" href="#">webhorus</a>
-        <div class="pe-2">
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar"
-                aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-        </div>
-        <div class="collapse navbar-collapse nav-pills justify-content-end  pt-2" id="navbar" style="width: 100vw;">
-            <ul class="navbar-nav mb-2 mb-lg-0" id="myTab" role="tablist" style="background-color:white">
-                <li class="nav-item" role="presentation">
-                    <a class="nav-link active" id="about-tab" data-bs-toggle="tab" data-bs-target="#about-tab-pane"
-                         aria-controls="about-tab-pane" aria-selected="true" onclick='document.getElementById("navbar").classList.remove("show")'>Home</a>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <a class="nav-link" id="config-tab" data-bs-toggle="tab" data-bs-target="#config-tab-pane"  onclick='document.getElementById("navbar").classList.remove("show")' aria-controls="config-tab-pane" aria-selected="false">Config</a>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <a class="nav-link" id="spectrum-tab" data-bs-toggle="tab" data-bs-target="#spectrum-tab-pane"
-                         aria-controls="spectrum-tab-pane" aria-selected="false" onclick='Plotly.Plots.resize("spectrum");document.getElementById("navbar").classList.remove("show")'>Spectrum</a>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <a class="nav-link" id="frames-tab" data-bs-toggle="tab" data-bs-target="#frames-tab-pane"  aria-controls="frames-tab-pane" aria-selected="false" onclick='document.getElementById("navbar").classList.remove("show")'>Frames</a>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <a class="nav-link" id="map-tab" data-bs-toggle="tab" data-bs-target="#map-tab-pane"  aria-controls="map-tab-pane" aria-selected="false" onclick='trackMap.invalidateSize();document.getElementById("navbar").classList.remove("show");'>Map</a>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <a class="nav-link" id="snr-tab" data-bs-toggle="tab" data-bs-target="#snr-tab-pane"  aria-controls="snr-tab-pane" aria-selected="false" onclick='Plotly.Plots.resize("snr");document.getElementById("navbar").classList.remove("show")'>SNR</a>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <a class="nav-link" id="plots-tab" data-bs-toggle="tab" data-bs-target="#plots-tab-pane"  aria-controls="plots-tab-pane" aria-selected="false" onclick='Plotly.Plots.resize("plots");document.getElementById("navbar").classList.remove("show")'>Plots</a>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <a class="nav-link" id="log-tab" data-bs-toggle="tab" data-bs-target="#log-tab-pane" type="a"
-                        role="tab" aria-controls="log-tab-pane" aria-selected="false" onclick='document.getElementById("navbar").classList.remove("show")'>Logs</a>
-                </li>
-            </ul>
-
-        </div>
-      
-    </nav>
-    <div style="padding-top:70px; padding-left:10px; padding-right:10px">
-        <div class="progress position-relative">
-            <div id="dbfs" class="progress-bar" role="progressbar" style="width: 0%;">
-                <span id="dbfstext" class="justify-content-center d-flex position-absolute w-100">-999
-                    dBFS</span>
+                </div>
+            </div>
+            <div class="row w-90 pt-2">
+                <div class="progress position-relative ms-auto me-auto col-11">
+                    <div id="dbfs" class="progress-bar" role="progressbar" style="width: 0%;">
+                        <span id="dbfstext" class="justify-content-center d-flex position-absolute w-100">-999
+                            dBFS</span>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
+       
+    </nav>
+
     <!-- Begin page content -->
-    <main role="main" class="container gap-4 d-grid " style="max-width:none; padding-top:10px">
+    <main role="main" class="container gap-4 d-grid " style="max-width:none; padding-top:10px; padding-top:70px;  ">
         <div class="tab-content" id="appTabs">
             <div class="tab-pane show active justify-content-center" id="about-tab-pane" role="tabpanel" tabindex="0">
                 <div class="row mt-3">
@@ -184,10 +185,10 @@
 
                 </div>
             </div>
-            <div class="tab-pane justify-content-center" id="config-tab-pane" role="tabpanel" tabindex="0">
+            <div class="tab-pane justify-content-center mt-3" id="config-tab-pane" role="tabpanel" tabindex="0" style="    border: solid #dee2e6; border-radius: 5px;">
 
 
-                <div class="row align-items-center  ">
+                <div class="row align-items-center  p-2">
                     <div class="col-md-4">
                         <div class="col mb-2">
                             <label class="form-label col-form-label" for="sound_adapter">Sound
@@ -301,33 +302,32 @@
                             </div>
                         </div>
                     </div>
-                    <div >
-                            <button id="audio_start" class="btn btn-primary col-4" onclick="startAudio()"
-                                disabled="true">Loading</button>
 
-                    </div>
                 </div>
             </div>
-            <div class="tab-pane justify-content-center" id="spectrum-tab-pane" role="tabpanel" tabindex="0">
-                <div id="spectrum" class="col-md-12 plotlyhack">
-                </div>
-            </div>
+
             <div class="tab-pane justify-content-center" id="frames-tab-pane" role="tabpanel" tabindex="0">
+
+
+                <div id="spectrum" class="col-md-12 plotlyhack" style="height:150px">
+                </div>
+                <div id="snr" class="col-md-12 plotlyhack" style="height:150px">
+                </div>
                 <div class="col-md-12" style="position:relative;">
+
                     <div id="frames"
                         style="white-space:nowrap;overflow-x: auto; margin-right: -100000000px; width:100%">
                     </div>
+
                 </div>
             </div>
             <div class="tab-pane justify-content-center" id="map-tab-pane" role="tabpanel" tabindex="0">
-                <div class="col-md-12" id="trackMap" style="height:100vh; width:100vw; position:fixed; left:0; top:90px;">
+                <div class="col-md-12" id="trackMap"
+                    style="height:100vh; width:100vw; position:fixed; left:0; top:90px;">
                 </div>
             </div>
 
-            <div class="tab-pane justify-content-center" id="snr-tab-pane" role="tabpanel" tabindex="0">
-                <div id="snr" class="col-md-12 plotlyhack">
-                </div>
-            </div>
+
             <div class="tab-pane justify-content-center" id="plots-tab-pane" role="tabpanel" tabindex="0">
                 <div id="plots" class="col-md-12 plotlyhack">
                 </div>
