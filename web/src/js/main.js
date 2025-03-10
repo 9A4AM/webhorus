@@ -317,7 +317,7 @@ globalThis.Plotly.newPlot('snr', [{
     title: {
         text: 'SNR (dB)',
         font: {
-            size: "9"
+            size: "12"
         },
         yref: "paper",
         yanchor: "top",
@@ -347,7 +347,7 @@ var spectrum_layout = {
     title: {
         text: 'Audio Spectrum (dB)',
         font: {
-            size: "9"
+            size: "12"
         },
         yref: "paper",
         yanchor: "top",
