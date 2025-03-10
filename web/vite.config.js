@@ -83,6 +83,12 @@ export default defineConfig({
                     enabled: false,
                     type: 'module',
                 },
+                id: "/",
+                launch_handler: ["auto"],
+                orientation: "any",
+                "categories": ["utilities", "weather"],
+                "dir": "ltr",
+                "prefer_related_aplications": false,
                 includeAssets: ["**/*"],
                 workbox: {
                     globPatterns: ["**/*.{js,css,html,png,whl,wasm,zip,py,ico,svg,json}"],
