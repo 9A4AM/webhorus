@@ -106,7 +106,7 @@ export default defineConfig({
                     orientation: "any",
                     "categories": ["utilities", "weather"],
                     "dir": "ltr",
-                    "prefer_related_aplications": false,
+                    "prefer_related_applications": false,
                     includeAssets: ["**/*"],
                     "icons": [
                       {
