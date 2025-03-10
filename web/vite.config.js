@@ -102,7 +102,7 @@ export default defineConfig({
                     "short_name": "webhorus",
                     "description": "web based version of horus-ui",
                     id: "/",
-                    launch_handler: ["auto"],
+                    launch_handler: { "client_mode":["auto"]},
                     orientation: "any",
                     "categories": ["utilities", "weather"],
                     "dir": "ltr",
