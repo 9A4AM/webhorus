@@ -7,7 +7,7 @@ from webhorus import demod
 from horusdemodlib.decoder import decode_packet
 from horusdemodlib.utils import telem_to_sondehub, fix_datetime
 
-VERSION = "0.0.6"
+VERSION = "0.0.7"
 
 # horus_demod = demod.Demod(tone_spacing=int(document.getElementById("tone_spacing").value))
 
