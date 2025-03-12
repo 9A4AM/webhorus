@@ -31,6 +31,7 @@ export default defineConfig({
         alias: {
             '~bootstrap': resolve(__dirname, 'node_modules/bootstrap'),
             '~leaflet': resolve(__dirname, 'node_modules/leaflet'),
+            '~radioreceiver': resolve(__dirname, 'node_modules/radioreceiver'),
         }
     },
     css: {
@@ -80,7 +81,7 @@ export default defineConfig({
                 registerType: 'autoUpdate',
                 injectRegister: 'auto',
                 devOptions: {
-                    enabled: true,
+                    enabled: false,
                     type: 'module',
                 },
                 workbox: {

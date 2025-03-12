@@ -144,7 +144,7 @@
                 </div>
             </div>
             <div class="row w-90 pt-2">
-                <div class="progress position-relative ms-auto me-auto col-11">
+                <div class="progress position-relative ms-auto me-auto col-11 ps-0 pe-0">
                     <div id="dbfs" class="progress-bar" role="progressbar" style="width: 0%;">
                         <span id="dbfstext" class="justify-content-center d-flex position-absolute w-100">-999
                             dBFS</span>
@@ -152,7 +152,7 @@
                 </div>
             </div>
         </div>
-       
+
     </nav>
 
     <!-- Begin page content -->
@@ -174,7 +174,8 @@
                                 href="https://sprocketfox.io/xssfox/2025/03/07/webhorus/">my (xssfox) blog</a>.
                         </p>
                         <p>
-                            The source code of webhorus can be found on the <a href="https://github.com/projecthorus/webhorus">Project Horus GitHub</a>
+                            The source code of webhorus can be found on the <a
+                                href="https://github.com/projecthorus/webhorus">Project Horus GitHub</a>
                         </p>
                         <div class="alert alert-warning">Issues have been reported when using Firefox/Gecko based
                             browsers
@@ -188,125 +189,223 @@
 
                 </div>
             </div>
-            <div class="tab-pane justify-content-center mt-3" id="config-tab-pane" role="tabpanel" tabindex="0" style="    border: solid #dee2e6; border-radius: 5px;">
+            <div class="tab-pane justify-content-center mt-3" id="config-tab-pane" role="tabpanel" tabindex="0">
+                <div class="accordion" id="configAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingGeneral">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapseGeneral" aria-expanded="true" aria-controls="collapseGeneral">
+                                General Configuration
+                            </button>
+                        </h2>
+                        <div id="collapseGeneral" class="accordion-collapse collapse show"
+                            aria-labelledby="headingGeneral" data-bs-parent="#configAccordion">
+                            <div class="accordion-body row align-items-center">
+
+                                <div class="col-md-4">
+                                    <div class="col mb-2">
+                                        <label class="form-label col-form-label" for="callsign">Uploader
+                                            Callsign</label>
+                                        <input class="form-control" id="callsign" placeholder="" value="N0CALL"
+                                            onchange="saveSettings()">
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="col mb-2">
+                                        <label class="form-label col-form-label" for="uploader_antenna">Uploader
+                                            Antenna</label>
+                                        <input class="form-control" id="uploader_antenna" placeholder=""
+                                            onchange="saveSettings()">
+                                    </div>
+                                </div>
 
 
-                <div class="row align-items-center  p-2">
-                    <div class="col-md-4">
-                        <div class="col mb-2">
-                            <label class="form-label col-form-label" for="sound_adapter">Sound
-                                input</label>
-                            <select class="form-control form-select" id="sound_adapter" onchange="snd_change()"
-                                placeholder="" disabled>
-                                <option value="placeholder" selected id="snd_ph">Click start first
-                                </option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="col mb-2">
-                            <label class="form-label col-form-label" for="callsign">Uploader
-                                Callsign</label>
-                            <input class="form-control" id="callsign" placeholder="" value="N0CALL"
-                                onchange="saveSettings()">
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="col mb-2">
-                            <label class="form-label col-form-label" for="uploader_radio">Uploader
-                                Radio</label>
-                            <input class="form-control" id="uploader_radio" placeholder="" onchange="saveSettings()">
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="col mb-2">
-                            <label class="form-label col-form-label" for="uploader_antenna">Uploader
-                                Antenna</label>
-                            <input class="form-control" id="uploader_antenna" placeholder="" onchange="saveSettings()">
-                        </div>
-                    </div>
+                                <div class="col-md-4">
+                                    <div class="col mb-2">
+                                        <label class="form-label col-form-label" for="uploader_lat">Uploader
+                                            Latitude</label>
+                                        <div class="input-group">
+                                            <input class="form-control" id="uploader_lat" placeholder=""
+                                                onchange="saveSettings()" type="number" inputmode="decimal">
+                                            <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                                                data-bs-target="#mapPickerModal" onclick="geoload()"
+                                                style="padding-top: 0.5px;">
+                                                &target;
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="col mb-2">
+                                        <label class="form-label col-form-label" for="uploader_lon">Uploader
+                                            Longitude</label>
+                                        <div class="input-group">
+                                            <input class="form-control" id="uploader_lon" placeholder=""
+                                                onchange="saveSettings()" type="number" inputmode="decimal">
+                                            <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                                                data-bs-target="#mapPickerModal" style="padding-top: 0.5px;">
+                                                &target;
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="col mb-2">
+                                        <label class="form-label col-form-label" for="uploader_alt">Uploader
+                                            Altitude</label>
+                                        <input class="form-control" id="uploader_alt" placeholder=""
+                                            onchange="saveSettings()" type="number" inputmode="decimal" value="0">
+                                    </div>
+                                </div>
 
+                                <div class="col-md-4">
+                                    <div class="col mb-2">
+                                        <label class="form-label col-form-label" for="tone_spacing">Tone
+                                            Spacing</label>
+                                        <input class="form-control" id="tone_spacing" placeholder=""
+                                            onchange="updateToneSpacing()" type="number" inputmode="decimal"
+                                            value="270">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="col mb-2">
+                                        <label class="form-label col-form-label" for="tone_spacing">Radio</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="radioType"
+                                                id="radioAudio" value="audio" checked
+                                                onchange="saveSettings();updateRadio();">
+                                            <label class="form-check-label" for="radioAudio">
+                                                Audio input
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="radioType" id="radioRTL"
+                                                value="rtl" onchange="saveSettings();updateRadio();">
+                                            <label class="form-check-label" for="radioRTL">
+                                                RTL-SDR
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="col mb-2">
+                                        <label class="form-label col-form-label">SondeHub settings</label>
 
-                    <div class="col-md-4">
-                        <div class="col mb-2">
-                            <label class="form-label col-form-label" for="uploader_lat">Uploader
-                                Latitude</label>
-                            <div class="input-group">
-                                <input class="form-control" id="uploader_lat" placeholder="" onchange="saveSettings()"
-                                    type="number" inputmode="decimal">
-                                <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                                    data-bs-target="#mapPickerModal" onclick="geoload()" style="padding-top: 0.5px;">
-                                    &target;
-                                </button>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" checked id="upload_sondehub"
+                                                onclick="saveSettings()" onchange="saveSettings()">
+                                            <label class="form-check-label " for="upload_sondehub">Upload to
+                                                SondeHub</label>
+
+                                        </div>
+                                    </div>
+                                    <div class="col mb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="uploader_position"
+                                                onclick="saveSettings()" onchange="saveSettings()">
+                                            <label class="form-check-label " for="uploader_position">Upload station
+                                                position</label>
+
+                                        </div>
+                                    </div>
+                                </div>
+
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="col mb-2">
-                            <label class="form-label col-form-label" for="uploader_lon">Uploader
-                                Longitude</label>
-                            <div class="input-group">
-                                <input class="form-control" id="uploader_lon" placeholder="" onchange="saveSettings()"
-                                    type="number" inputmode="decimal">
-                                <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                                    data-bs-target="#mapPickerModal" style="padding-top: 0.5px;">
-                                    &target;
-                                </button>
+                    <div class="accordion-item" id="audioSection">
+                        <h2 class="accordion-header" id="headingAudio">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapseAudio" aria-expanded="false" aria-controls="collapseTwo">
+                                Audio Configuration
+                            </button>
+                        </h2>
+                        <div id="collapseAudio" class="accordion-collapse collapse" aria-labelledby="headingAudio"
+                            data-bs-parent="#configAccordion">
+                            <div class="accordion-body row align-items-center">
+                                <div class="col-md-4">
+                                    <div class="col mb-2">
+                                        <label class="form-label col-form-label" for="sound_adapter">Sound
+                                            input</label>
+                                        <select class="form-control form-select" id="sound_adapter"
+                                            onchange="snd_change()" placeholder="" disabled>
+                                            <option value="placeholder" selected id="snd_ph">Click start first
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="col mb-2">
+                                        <label class="form-label col-form-label" for="uploader_radio">Uploader
+                                            Radio</label>
+                                        <input class="form-control" id="uploader_radio" placeholder=""
+                                            onchange="saveSettings()">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="col mb-2">
+                                        <label class="form-label col-form-label" for="dial">Dial Frequency
+                                            (MHz)</label>
+                                        <input class="form-control" id="dial" placeholder="" onchange="saveSettings()"
+                                            type="number" inputmode="decimal">
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="accordion-item d-none" id="rtlSection">
+                        <h2 class="accordion-header" id="headingRtl">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapseRTL" aria-expanded="false" aria-controls="collapseThree">
+                                RTL SDR Configuration
+                            </button>
+                        </h2>
+                        <div id="collapseRTL" class="accordion-collapse collapse" aria-labelledby="headingRtl"
+                            data-bs-parent="#configAccordion">
+                            <div class="accordion-body row align-items-center">
+                                <div class="col-md-4">
+                                    <div class="col mb-2">
+                                        <label class="form-label col-form-label" for="dial">RTL Frequency
+                                            (MHz)</label>
+                                        <input class="form-control" id="rtl_freq" placeholder=""
+                                            onchange="saveSettings();rtlFreq();" type="number" inputmode="decimal" value="434.199">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="col mb-2">
+                                        <label class="form-label col-form-label" for="dial">RTL Gain
+                                            (MHz)</label>
+                                        <div class="row">
+                                            <input type="range" class="form-range " min="-0.5" max="50" step="0.5" value="-0.5"
+                                                id="gain" oninput="saveSettings(); updateGain();">
+                                        </div>
+                                        <div class="row">
+                                            <input class="form-control" id="gaindb" placeholder="" disabled="disabled"
+                                                value="3db">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="col mb-2">
+                                        <!-- <label class="form-label col-form-label">Other settings</label> -->
+
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="rtlaudio"
+                                                onclick="saveSettings();rtlaudio()" onchange="saveSettings();rtlaudio()">
+                                            <label class="form-check-label " for="rtlaudio">Listen to audio (may be loud)</label>
+
+                                        </div>
+                                    </div>
+                                   
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="col mb-2">
-                            <label class="form-label col-form-label" for="uploader_alt">Uploader
-                                Altitude</label>
-                            <input class="form-control" id="uploader_alt" placeholder="" onchange="saveSettings()"
-                                type="number" inputmode="decimal" value="0">
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="col mb-2">
-                            <label class="form-label col-form-label" for="dial">Dial Frequency
-                                (MHz)</label>
-                            <input class="form-control" id="dial" placeholder="" onchange="saveSettings()" type="number"
-                                inputmode="decimal">
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="col mb-2">
-                            <label class="form-label col-form-label" for="tone_spacing">Tone
-                                Spacing</label>
-                            <input class="form-control" id="tone_spacing" placeholder="" onchange="updateToneSpacing()"
-                                type="number" inputmode="decimal" value="270">
-                        </div>
-                    </div>
-                    <div class="row align-middle">
-                        <div class="col mb-2">
-
-
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" checked id="upload_sondehub"
-                                    onclick="saveSettings()" onchange="saveSettings()">
-                                <label class="form-check-label " for="upload_sondehub">Upload to
-                                    SondeHub</label>
-
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row align-middle">
-                        <div class="col mb-2">
-
-
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="uploader_position"
-                                    onclick="saveSettings()" onchange="saveSettings()">
-                                <label class="form-check-label " for="uploader_position">Upload station
-                                    position</label>
-
-                            </div>
-                        </div>
-                    </div>
-
                 </div>
+
+
             </div>
 
             <div class="tab-pane justify-content-center" id="frames-tab-pane" role="tabpanel" tabindex="0">

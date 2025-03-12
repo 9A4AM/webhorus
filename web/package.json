@@ -7,6 +7,7 @@
     "leaflet": "^1.9.4",
     "plotly.js-dist-min": "^3.0.1",
     "pyodide": "^0.27.3",
+    "radioreceiver": "https://github.com/jtarrio/radioreceiver.git",
     "rollup-plugin-copy": "^3.5.0",
     "vite": "^6.2.0",
     "vite-plugin-pwa": "^0.21.1",

@@ -51,7 +51,9 @@ class Demod():
             stereo_iq=False,
             verbose=False,
             callback=None,
-            sample_rate=44100
+            sample_rate=48000,
+            freq_est_lower=100,
+            freq_est_upper=4000
     ):
         self.stereo_iq = stereo_iq
 
@@ -68,7 +70,7 @@ class Demod():
             mode, rate, tone_spacing, sample_rate, p
         )
 
-        horus_api.horus_set_freq_est_limits(self.hstates,100,4000)
+        horus_api.horus_set_freq_est_limits(self.hstates,freq_est_lower,freq_est_upper)
 
         # set verbose
         horus_api.horus_set_verbose(self.hstates, verbose)
@@ -127,26 +129,21 @@ class Demod():
             audio_id_data
         )
         data_out = _horus_api_cffi.ffi.new("char[]", self.max_ascii_out)
-
         valid = horus_api.horus_rx(
             self.hstates,
             data_out,
             data_in,
             self.stereo_iq
         )
-
         data_out_bytes = bytes(_horus_api_cffi.ffi.buffer(data_out))
         crc = bool(self.crc_ok)
-
         data_out_bytes = data_out_bytes.rstrip(b'\x00')
-
         if self.mode not in [
             horus_api.HORUS_MODE_RTTY_7N1,
             horus_api.HORUS_MODE_RTTY_7N2,
             horus_api.HORUS_MODE_RTTY_8N2,
         ]:
             data_out_bytes = bytes.fromhex(data_out_bytes.decode("ascii"))
-
         if valid:
             return Frame(
                 data=data_out_bytes,

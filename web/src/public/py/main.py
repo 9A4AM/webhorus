@@ -14,10 +14,16 @@ VERSION = "0.0.7"
 buffer = b''
 
 
-def start_modem(sample_rate):
+def start_modem(sample_rate, stereo_iq=False, freq_est_lower=100, freq_est_upper=4000):
     global horus_demod
-    horus_demod = demod.Demod(tone_spacing=int(
-        document.getElementById("tone_spacing").value), sample_rate=sample_rate)
+    horus_demod = demod.Demod(stereo_iq=stereo_iq,tone_spacing=int(
+        document.getElementById("tone_spacing").value),
+        sample_rate=sample_rate, 
+        freq_est_lower=freq_est_lower, 
+        freq_est_upper=freq_est_upper
+    )
+    print(freq_est_lower)
+    print(freq_est_upper)
     print(sample_rate)
     return horus_demod.nin
 

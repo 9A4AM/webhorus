@@ -9,6 +9,18 @@ import * as Plotly from "plotly.js-dist-min";
 
 import "leaflet";
 
+import { Radio } from "radioreceiver/src/radio/radio";
+import { RTL2832U_Provider } from "radioreceiver/src/rtlsdr/rtl2832u";
+import { Demodulator } from "radioreceiver/src/demod/demodulator";
+
+
+const rtl_sdr_rate = 256000;
+const ssb_bandwidth = 6000;
+const rtl_offset = -3000; // we offset the dial frequency by this much so we can offer some adjustment range
+const rtl_freq_est_lower = 1000;
+const rtl_freq_est_upper = 5000;
+
+
 
 const fftSize = 16384
 
@@ -16,12 +28,12 @@ var picked = false
 
 var pickerMarker;
 var mapPickerMap;
-globalThis.geoload = function(){
-    function browserPosition(position){
+globalThis.geoload = function () {
+    function browserPosition(position) {
         log_entry(`Received user location`, "light")
-        if (pickerMarker == undefined){
+        if (pickerMarker == undefined) {
             pickerMarker = L.marker([position.coords.latitude, position.coords.longitude]).addTo(mapPickerMap);
-            mapPickerMap.setView([position.coords.latitude, position.coords.longitude],12)
+            mapPickerMap.setView([position.coords.latitude, position.coords.longitude], 12)
         }
     }
 
@@ -42,7 +54,7 @@ function loadMapPicker() {
         mapPickerMap.invalidateSize();
     });
 
-    
+
     mapPickerMap.on('click', function (e) {
         if (pickerMarker) {
             mapPickerMap.removeLayer(pickerMarker);
@@ -89,6 +101,10 @@ globalThis.saveSettings = function () {
     localStorage.setItem("uploader_position", document.getElementById("uploader_position").checked)
     localStorage.setItem("dial", document.getElementById("dial").value)
     localStorage.setItem("tone_spacing", document.getElementById("tone_spacing").value)
+    localStorage.setItem("rtl_freq", document.getElementById("rtl_freq").value)
+    localStorage.setItem("gain", document.getElementById("gain").value)
+    localStorage.setItem("rtl", document.getElementById("radioRTL").checked)
+    localStorage.setItem("rtlaudio", document.getElementById("rtlaudio").checked)
     log_entry(`Saved settings`, "light")
     report_position()
 }
@@ -104,10 +120,25 @@ globalThis.loadSettings = function () {
     if (localStorage.getItem("uploader_position")) { document.getElementById("uploader_position").checked = localStorage.getItem("uploader_position") }
     if (localStorage.getItem("dial")) { document.getElementById("dial").value = localStorage.getItem("dial") }
     if (localStorage.getItem("tone_spacing")) { document.getElementById("tone_spacing").value = localStorage.getItem("tone_spacing") }
+    if (localStorage.getItem("rtl_freq")) { document.getElementById("rtl_freq").value = localStorage.getItem("rtl_freq") }
+    if (localStorage.getItem("gain")) { document.getElementById("gain").value = localStorage.getItem("gain") }
+    if (localStorage.getItem("rtlaudio")) { document.getElementById("rtlaudio").checked = localStorage.getItem("rtlaudio") }
+
+    if (localStorage.getItem("rtl") == 'true') {
+        document.getElementById("radioRTL").checked = true;
+        document.getElementById("radioAudio").checked = false;
+    } else {
+        document.getElementById("radioRTL").checked = false;
+        document.getElementById("radioAudio").checked = true;
+    }
+
+    globalThis.updateRadio()
+    globalThis.updateGain()
+
     log_entry(`Loaded settings`, "light")
 }
 
-globalThis.addFrame = function(data) {
+globalThis.addFrame = function (data) {
     const frames_div = document.getElementById("frames")
     const card = document.createElement("div")
     card.classList = "card text-dark bg-light me-3"
@@ -140,9 +171,9 @@ globalThis.addFrame = function(data) {
             const titleCase = (str) => str.replace(/\b\S/g, t => t.toUpperCase());
             fieldName.innerText = titleCase(field_name.replace("_", " "))
             const fieldValue = document.createElement("td")
-            if (field_name == "latitude" || field_name == "longitude" ){
+            if (field_name == "latitude" || field_name == "longitude") {
                 const geoLink = document.createElement("a")
-                geoLink.innerText = toFixedIfNecessary(parseFloat(data[field_name]),4)
+                geoLink.innerText = toFixedIfNecessary(parseFloat(data[field_name]), 4)
                 geoLink.href = `geo:${data["latitude"]},${data["longitude"]}`
                 fieldValue.appendChild(geoLink)
             } else {
@@ -193,13 +224,18 @@ globalThis.rx_packet = function (packet, sh_format, stats) {
 
     var final_freq
 
-    if (document.getElementById("dial").value) {
-        var dial_freq = parseFloat(document.getElementById("dial").value)
-        if (!isNaN(dial_freq)) {
-            dial_freq = dial_freq * 1000000
-            final_freq = (freq_mean + dial_freq) / 1000000
+    if (document.getElementById("radioRTL").checked){
+        final_freq = globalThis.Radio.getFrequency() + freq_mean
+    }else {
+        if (document.getElementById("dial").value) {
+            var dial_freq = parseFloat(document.getElementById("dial").value)
+            if (!isNaN(dial_freq)) {
+                dial_freq = dial_freq * 1000000
+                final_freq = (freq_mean + dial_freq) / 1000000
+            }
         }
     }
+
 
     if (sh_format) {
         var sh_packet = sh_format.toJs()
@@ -258,7 +294,7 @@ globalThis.rx_packet = function (packet, sh_format, stats) {
             }
 
         }).catch((error) => {
-            log_entry("Error posting to sondehub: " + error.message,"danger")
+            log_entry("Error posting to sondehub: " + error.message, "danger")
         })
 
     } else {
@@ -321,7 +357,7 @@ globalThis.Plotly.newPlot('snr', [{
         },
         yref: "paper",
         yanchor: "top",
-        
+
     },
     yaxis: {
         tickfont: {
@@ -333,7 +369,7 @@ globalThis.Plotly.newPlot('snr', [{
             include: [-2, 20]
         }
     }
-}, { responsive: true , staticPlot: true});
+}, { responsive: true, staticPlot: true });
 
 var spectrum_layout = {
     autosize: true,
@@ -371,7 +407,7 @@ globalThis.Plotly.newPlot('spectrum', [{
     y: [],
     x: [],
     mode: 'lines'
-}], spectrum_layout, { responsive: true , staticPlot: true});
+}], spectrum_layout, { responsive: true, staticPlot: true });
 
 globalThis.Plotly.newPlot('plots', [], {
     autosize: true,
@@ -396,6 +432,9 @@ globalThis.updateStats = function (stats) {
 
     // update spectrum annotations
     spectrum_layout.annotations = freq_est.map((x) => {
+        if (document.getElementById("radioRTL").checked){
+            x = rtl_offset+x
+        }
         return {
             x: x,
             y: 0,
@@ -409,6 +448,30 @@ globalThis.updateStats = function (stats) {
 
         }
     })
+
+    if (document.getElementById("radioRTL").checked){
+        spectrum_layout.shapes = [
+            {
+                type: 'rect',
+                // x-reference is assigned to the x-values
+                xref: 'x',
+                // y-reference is assigned to the plot paper [0,1]
+                yref: 'paper',
+                x0: rtl_freq_est_lower+rtl_offset,
+                y0: 0,
+                x1: rtl_freq_est_upper+rtl_offset,
+                y1: 1,
+                fillcolor: '#d3d3d3',
+                opacity: 0.2,
+                line: {
+                    width: 0
+                }
+            }
+        ]
+    } else {
+        spectrum_layout.shapes = []
+    }
+
     globalThis.Plotly.extendTraces('snr', {
         y: [[stats_js.snr_est]],
         x: [[new Date().toISOString()]]
@@ -448,7 +511,6 @@ async function init_python() {
     pyodide.runPython(await (await fetch("/py/main.py")).text());
     log_entry("main.py loaded", "light")
 
-    //globalThis.nin =  pyodide.runPython("to_js(horus_demod.nin)")
     globalThis.write_audio = pyodide.runPython("write_audio")
     globalThis.fix_datetime = pyodide.runPython("fix_datetime")
     globalThis.update_tone_spacing = pyodide.runPython("update_tone_spacing")
@@ -478,11 +540,15 @@ async function add_constraints(constraint) {
 
 globalThis.snd_change = async function () {
     console.log("changing sound device")
-    var constraint = {
-        "audio": {
-            "deviceId": { "exact": document.getElementById("sound_adapter").value },
+    if (document.getElementById("sound_adapter").value != 'placeholder') {
+        var constraint = {
+            "audio": {
+                "deviceId": { "exact": document.getElementById("sound_adapter").value },
 
+            }
         }
+    } else {
+        var constraint = undefined
     }
     log_entry(`Changing sound device: ${JSON.stringify(constraint)}`, "light")
     startAudio(constraint)
@@ -496,77 +562,288 @@ var microphone_stream = null
 var horusNode
 var activeAnalyser
 
-globalThis.startAudio = async function (constraint) {
-    log_entry(`Starting audio`, "light")
-    globalThis.audioContext = new AudioContext();
-    await audioContext.audioWorklet.addModule('/js/audio.js')
-    console.log("audio is starting up ...");
-
-    if (constraint == undefined) {
-        var audio_constraint = { audio: {} }
+globalThis.updateRadio = function () {
+    const audio = document.getElementById("radioAudio").checked
+    if (audio) {
+        document.getElementById("audioSection").classList.remove("d-none")
+        document.getElementById("rtlSection").classList.add("d-none")
     } else {
-        var audio_constraint = constraint
+        document.getElementById("audioSection").classList.add("d-none")
+        document.getElementById("rtlSection").classList.remove("d-none")
     }
-    const audio_constraint_filters = await add_constraints(audio_constraint)
-    log_entry(`Audio constraints: ${JSON.stringify(audio_constraint_filters)}`, "light")
 
-    navigator.mediaDevices.getUserMedia(audio_constraint_filters).then((stream) => {
+    if (globalThis.microphone_stream) {
+        log_entry(`Clearing existing input stream.`, "light")
+        globalThis.microphone_stream.mediaStream.getTracks()[0].stop()
+        globalThis.microphone_stream.disconnect()
+    }
+
+    if (globalThis.rtlAudioNode) {
+        globalThis.rtlAudioNode.disconnect()
+        globalThis.rtlAudioNode.port.onmessage = undefined
+    }
+    if (globalThis.Radio){
+        globalThis.Radio.stop()
+    }
+    if (VERSION) { // only reset the start button if python has been loaded
+        document.getElementById("audio_start").removeAttribute("disabled");
+        document.getElementById("audio_start").classList.remove("btn-outline-success")
+        document.getElementById("audio_start").innerText = "Start"
+        document.getElementById("dbfs").classList = "progress-bar"
+        document.getElementById("dbfs").style.width = "0%"
+        document.getElementById("dbfstext").innerText = "-999 dBFS"
+    }
+
+    if (audio && document.getElementById("sound_adapter").value != 'placeholder') {
+        globalThis.snd_change()
+    }
+}
+
+function updatedbfs(dBFS){
+    var percent = (1 - (dBFS / -120)) * 100 // I don't even know. just trying to represent the level
+
+    if (!isFinite(percent)) {
+        percent = 0;
+    }
+    document.getElementById("dbfs").style.width = percent.toFixed(2) + "%"
+    document.getElementById("dbfstext").innerText = dBFS.toFixed(2) + " dBFS"
+    if (dBFS > -5) {
+        document.getElementById("dbfs").classList = "progress-bar bg-danger"
+    } else if (dBFS < -90) {
+        document.getElementById("dbfs").classList = "progress-bar bg-danger"
+    } else if (dBFS < -50) {
+        document.getElementById("dbfs").classList = "progress-bar bg-warning"
+    } else {
+        document.getElementById("dbfs").classList = "progress-bar bg-success"
+    }
+}
+
+globalThis.updateGain = function () {
+    const gain = parseFloat(document.getElementById("gain").value)
+    if (gain == -0.5) {
+        document.getElementById("gaindb").value = `Auto gain control`
+    } else {
+        document.getElementById("gaindb").value = `${gain} dB`
+    }
+    if (globalThis.Radio){
+        if (gain == -0.5){
+            globalThis.Radio.setGain(null)
+            log_entry(`Setting RTL Gain: agc`, "light")
+        } else {
+            globalThis.Radio.setGain(gain)
+            log_entry(`Setting RTL Gain: ${gain}`, "light")
+        }
+    }
+}
+
+globalThis.rtlFreq = function (){
+    const rtl_freq = parseFloat(document.getElementById("rtl_freq").value) * 1000000
+    if (globalThis.Radio){
+        globalThis.Radio.setFrequency(rtl_freq+rtl_offset)
+        log_entry(`Setting RTL Freq: ${rtl_freq}`, "light")
+    }
+}
+
+globalThis.startAudio = async function (constraint) {
+
+    if (document.getElementById("about-tab").classList.contains("active")){
+        document.getElementById("frames-tab").click() // simulate clicking on the receive tab since most users will want to see that when starting the modem
+    }
+    
+    log_entry(`Starting audio`, "light")
+    if (!(globalThis.audioContext)) {
+        globalThis.audioContext = new AudioContext();
+        await globalThis.audioContext.audioWorklet.addModule('/js/audio.js')
+        await globalThis.audioContext.audioWorklet.addModule('/js/rtl_audio.js')
+    }
+
+    if (globalThis.microphone_stream) {
+        log_entry(`Clearing existing input stream.`, "light")
+        globalThis.microphone_stream.mediaStream.getTracks()[0].stop()
+        globalThis.microphone_stream.disconnect()
+    }
+
+    if (globalThis.rtlAudioNode) {
+        globalThis.rtlAudioNode.disconnect()
+    }
+
+    if (document.getElementById("radioAudio").checked) {
+
+
+        console.log("audio is starting up ...");
+
         if (constraint == undefined) {
-            navigator.mediaDevices.enumerateDevices().then(devices => {
-                const saved_device = localStorage.getItem("sound_adapter")
-                const device_id_list = devices.map((device) => device.deviceId)
+            var audio_constraint = { audio: {} }
+        } else {
+            var audio_constraint = constraint
+        }
+        const audio_constraint_filters = await add_constraints(audio_constraint)
+        log_entry(`Audio constraints: ${JSON.stringify(audio_constraint_filters)}`, "light")
+
+        navigator.mediaDevices.getUserMedia(audio_constraint_filters).then((stream) => {
+            if (constraint == undefined) {
+                navigator.mediaDevices.enumerateDevices().then(devices => {
+                    const saved_device = localStorage.getItem("sound_adapter")
+                    const device_id_list = devices.map((device) => device.deviceId)
 
 
-                document.getElementById("sound_adapter").removeAttribute("disabled")
-                document.getElementById("snd_ph").remove()
-                for (var index in devices) {
-                    if (devices[index].kind == 'audioinput') {
-                        var snd_opt = document.createElement("option")
-                        snd_opt.innerText = devices[index].label
-                        snd_opt.value = devices[index].deviceId
-                        document.getElementById("sound_adapter").appendChild(snd_opt)
+                    document.getElementById("sound_adapter").removeAttribute("disabled")
+                    document.getElementById("snd_ph").remove()
+                    for (var index in devices) {
+                        if (devices[index].kind == 'audioinput') {
+                            var snd_opt = document.createElement("option")
+                            snd_opt.innerText = devices[index].label
+                            snd_opt.value = devices[index].deviceId
+                            document.getElementById("sound_adapter").appendChild(snd_opt)
+                        }
                     }
-                }
+                    document.getElementById("sound_adapter").value = audio_constraint_filters.audio.deviceId
+                    if (saved_device && device_id_list.includes(saved_device)) {
+                        log_entry(`Found saved sound adapter - changing to: ${saved_device}`, "light")
+                        document.getElementById("sound_adapter").value = saved_device
+                        snd_change()
+                    } else {
+                        start_microphone(stream);
+                    }
+
+                })
+            } else {
+                log_entry(`Selecting sound device: ${audio_constraint_filters.audio.deviceId}`, "light")
                 document.getElementById("sound_adapter").value = audio_constraint_filters.audio.deviceId
-                if (saved_device && device_id_list.includes(saved_device)) {
-                    log_entry(`Found saved sound adapter - changing to: ${saved_device}`, "light")
-                    document.getElementById("sound_adapter").value = saved_device
-                    snd_change()
-                } else {
-                    start_microphone(stream);
+                start_microphone(stream);
+            }
+        })
+    } else {
+        start_rtl()
+    }
+
+
+    function start_rtl() {
+
+        globalThis.rtlAudioNode = new AudioWorkletNode(globalThis.audioContext, 'rtlnode', { "numberOfInputs": 0, "numberOfOutputs": 1 })
+        globalThis.rtlAudioNode.port.onmessage = (event) => {
+            if (event.data) {
+                globalThis.audioContext.resume()
+            } else {
+                if (document.getElementById("radioRTL").checked){
+                    globalThis.audioContext.suspend()
                 }
                 
-            })
-        } else {
-            log_entry(`Selecting sound device: ${audio_constraint_filters.audio.deviceId}`, "light")
-            document.getElementById("sound_adapter").value = audio_constraint_filters.audio.deviceId
-            start_microphone(stream);
+            }
         }
-    })
+
+        class rtlReceiver {
+            constructor() {
+                this.started = false
+            }
+            play(left, right) {
+                if (this.started == false){
+                    document.getElementById("audio_start").setAttribute("disabled", "disabled");
+                    document.getElementById("audio_start").classList.add("btn-outline-success")
+                    document.getElementById("audio_start").innerText = "Running"
+                    this.started = true
+                }
+                globalThis.rtlAudioNode.port.postMessage(left)
+            }
+        }
+
+        class dbfsCalc {
+            constructor() {}
+            setSampleRate(rate) {
+
+            }
+            receiveSamples(I,Q,frequency){
+                var max = Math.max(...(I.map(x=>Math.abs(x))),...(Q.map(x=>Math.abs(x))))
+                var dBFS = 20 * Math.log10(max);
+                updatedbfs(dBFS)
+            }
+        }
+
+        globalThis.rtl = new rtlReceiver()
+        rtl.sampleRate = globalThis.audioContext.sampleRate
+
+        globalThis.usbDemod = new Demodulator(rtl_sdr_rate)
+        globalThis.usbDemod.setMode({
+            scheme: "USB",
+            bandwidth: ssb_bandwidth * 2,
+            squelch: 0
+        })
+
+        globalThis.usbDemod.player = globalThis.rtl
+
+        globalThis.Radio = new Radio(
+            new RTL2832U_Provider(),
+            globalThis.usbDemod.andThen(new dbfsCalc()),
+            rtl_sdr_rate, // sample rate
+        )
+        globalThis.Radio.setSampleRate(rtl_sdr_rate)
+        globalThis.rtlFreq()
+        globalThis.updateGain()
+
+        globalThis.Radio.start()
+        globalThis.nin = globalThis.start_modem(globalThis.audioContext.sampleRate, false, rtl_freq_est_lower, rtl_freq_est_upper)
+
+       
+        horusNode = new AudioWorkletNode(globalThis.audioContext, 'horus', {
+            processorOptions: {
+                nin: globalThis.nin
+            }
+        });
 
 
+
+        globalThis.rtlAudioNode.connect(horusNode);
+
+        horusNode.port.onmessage = (e) => {
+            on_audio(e.data)
+        }
+        globalThis.audioContext.resume()
+
+        // setup spectogram
+        activeAnalyser = globalThis.audioContext.createAnalyser();
+        activeAnalyser.chan
+        activeAnalyser.fftSize = fftSize;
+        activeAnalyser.smoothingTimeConstant = 0.25;
+        globalThis.rtlAudioNode.connect(activeAnalyser);
+
+
+
+        if (activeAnalyser) {
+            let analyser = activeAnalyser;
+            const maxdB = analyser.maxDecibels;
+            const mindB = analyser.minDecibels;
+            globalThis.bufferLength = analyser.frequencyBinCount;
+            const step = (globalThis.audioContext.sampleRate / 2) / globalThis.bufferLength
+            const x_values = [...Array(globalThis.bufferLength).keys()].map((x) => (x + 1) * step)
+
+            // get closest index to x hz to limit plot size
+            globalThis.max_index = x_values.reduce((prev, curr, index) => { if (curr < ssb_bandwidth) { return index } else { return prev } }, 0)
+            globalThis.filtered_x_values = x_values.slice(0, globalThis.max_index).map((x)=>rtl_offset+x)
+
+            if (globalThis.analyserUpdate) {
+                clearInterval(globalThis.analyserUpdate)
+            }
+            globalThis.analyserUpdate = setInterval(() => {
+                const freqData = new Float32Array(globalThis.bufferLength);
+                analyser.getFloatFrequencyData(freqData);
+                const spectrum_data = {
+                    y: [freqData.slice(0, globalThis.max_index).map((x) => Math.max(Math.min(150, Math.abs(x)), 0.1))],
+                    x: [globalThis.filtered_x_values]
+                };
+                globalThis.Plotly.update('spectrum',
+                    spectrum_data,
+                    spectrum_layout)
+            }, 200)
+            log_entry(`FFT Started`, "light")
+
+
+
+        }
+    }
 
     function on_audio(audio_buffer) {
 
-        var max_audio = Math.max(...audio_buffer)
-
-        // update dbfs meter - and yes I know how silly it is that we are turning these back to floats....
-        var dBFS = 20 * Math.log10(max_audio / 32767); // technically we are ignoring half the signal here, but lets assume its not too bias'd
-        var percent = (1 - (dBFS / -120)) * 100 // I don't even know. just trying to represent the level
-        if (!isFinite(percent)) {
-            percent = 0;
-        }
-        document.getElementById("dbfs").style.width = percent.toFixed(2) + "%"
-        document.getElementById("dbfstext").innerText = dBFS.toFixed(2) + " dBFS"
-        if (dBFS > -5) {
-            document.getElementById("dbfs").classList = "progress-bar bg-danger"
-        } else if (dBFS < -90) {
-            document.getElementById("dbfs").classList = "progress-bar bg-danger"
-        } else if (dBFS < -50) {
-            document.getElementById("dbfs").classList = "progress-bar bg-warning"
-        } else {
-            document.getElementById("dbfs").classList = "progress-bar bg-success"
-        }
+       
 
         globalThis.nin = write_audio(audio_buffer)
         horusNode.port.postMessage(globalThis.nin)
@@ -577,7 +854,7 @@ globalThis.startAudio = async function (constraint) {
 
 
     function start_microphone(stream) {
-        
+
         document.getElementById("audio_start").setAttribute("disabled", "disabled");
         document.getElementById("audio_start").classList.add("btn-outline-success")
         document.getElementById("audio_start").innerText = "Running"
@@ -588,19 +865,19 @@ globalThis.startAudio = async function (constraint) {
         }
         log_entry(`Starting input stream`, "light")
         try {
-            globalThis.microphone_stream = audioContext.createMediaStreamSource(stream);
+            globalThis.microphone_stream = globalThis.audioContext.createMediaStreamSource(stream);
         } catch (err) {
             console.log(err)
             log_entry("Error opening audio device. For firefox users - ensure your default sound device is set to 48,000 sample rate in your OS settings", "danger")
         }
 
-        log_entry(`Audio context sample rate: ${audioContext.sampleRate}`, "light")
+        log_entry(`Audio context sample rate: ${globalThis.audioContext.sampleRate}`, "light")
 
-        globalThis.nin = globalThis.start_modem(audioContext.sampleRate)
+        globalThis.nin = globalThis.start_modem(globalThis.audioContext.sampleRate)
 
         log_entry(`Initial nin: ${globalThis.nin}`, "light")
 
-        horusNode = new AudioWorkletNode(audioContext, 'horus', {
+        horusNode = new AudioWorkletNode(globalThis.audioContext, 'horus', {
             processorOptions: {
                 nin: globalThis.nin
             }
@@ -608,11 +885,16 @@ globalThis.startAudio = async function (constraint) {
         globalThis.microphone_stream.connect(horusNode);
         horusNode.port.onmessage = (e) => {
             on_audio(e.data)
+
+            var max_audio = Math.max(...e.data)
+            // update dbfs meter - and yes I know how silly it is that we are turning these back to floats....
+            var dBFS = 20 * Math.log10(max_audio / 32767); // technically we are ignoring half the signal here, but lets assume its not too bias'd
+            updatedbfs(dBFS)
         }
-        audioContext.resume()
+        globalThis.audioContext.resume()
 
         // setup spectogram
-        activeAnalyser = audioContext.createAnalyser();
+        activeAnalyser = globalThis.audioContext.createAnalyser();
         activeAnalyser.chan
         activeAnalyser.fftSize = fftSize;
         activeAnalyser.smoothingTimeConstant = 0.25;
@@ -625,7 +907,7 @@ globalThis.startAudio = async function (constraint) {
             const maxdB = analyser.maxDecibels;
             const mindB = analyser.minDecibels;
             globalThis.bufferLength = analyser.frequencyBinCount;
-            const step = (audioContext.sampleRate / 2) / globalThis.bufferLength
+            const step = (globalThis.audioContext.sampleRate / 2) / globalThis.bufferLength
             const x_values = [...Array(globalThis.bufferLength).keys()].map((x) => (x + 1) * step)
 
             // get closest index to 4k hz to limit plot size
@@ -691,12 +973,13 @@ function report_position() {
                 log_entry("Reported station info: " + body, "info")
             })
         }).catch((error) => {
-            log_entry("Error posting to sondehub: " + error.message,"danger")
-          })
+            log_entry("Error posting to sondehub: " + error.message, "danger")
+        })
     }
 }
 
 function log_entry(message, level) {
+    console.log(message)
     const rx_log = document.getElementById("rx_log");
     var log_entry = document.createElement("div");
     log_entry.innerText = message
@@ -706,11 +989,11 @@ function log_entry(message, level) {
 }
 
 // plotly auto resize fix
-setInterval(()=>{
+setInterval(() => {
     globalThis.Plotly.update("spectrum")
     globalThis.Plotly.update("snr")
     globalThis.Plotly.update("plots")
-}, 50)
+}, 150)
 
 
 
