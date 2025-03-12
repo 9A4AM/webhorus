@@ -178,7 +178,7 @@
                                 href="https://github.com/projecthorus/webhorus">Project Horus GitHub</a>
                         </p>
                         <p>
-                            RTL-SDR support is provided through the extremely well written libraries by <a href="https://jacobo.tarrio.org/">Jacobo Tarrío</a> from their <a href="https://radio.ea1iti.es/">Radio Receiver</a> project 
+                            RTL-SDR is only available on browsers that support Web USB API which currently is only Chrome and Chrome based browsers. RTL-SDR support is provided through the extremely well written libraries by <a href="https://jacobo.tarrio.org/">Jacobo Tarrío</a> from their <a href="https://radio.ea1iti.es/">Radio Receiver</a> project 
                         </p>
                         <div class="alert alert-warning">Issues have been reported when using Firefox/Gecko based
                             browsers
@@ -284,7 +284,7 @@
                                             </label>
                                         </div>
                                         <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="radioType" id="radioRTL"
+                                            <input class="form-check-input" type="radio" name="radioType" id="radioRTL" disabled
                                                 value="rtl" onchange="saveSettings();updateRadio();">
                                             <label class="form-check-label" for="radioRTL">
                                                 RTL-SDR

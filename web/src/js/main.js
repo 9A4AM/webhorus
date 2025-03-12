@@ -1025,6 +1025,9 @@ setInterval(() => {
 }, 150)
 
 
+if (navigator.usb){
+    document.getElementById("radioRTL").removeAttribute("disabled")
+}
 
 globalThis.loadSettings();
 loadMapPicker()
