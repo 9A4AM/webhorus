@@ -28,7 +28,7 @@ jobs:
           ./emsdk activate ${PYODIDE_EMSCRIPTEN_VERSION}
           source emsdk_env.sh
           cd ..
-          pyodide build --outdir web/public/assets/
+          pyodide build --outdir web/src/public/assets/
         shell: bash
       - name: Yarn
         run: |
@@ -39,7 +39,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: webhorus.whl
-          path: web/public/assets/webhorus-*.whl
+          path: web/src/public/assets/webhorus-*.whl
       - name: 'Upload Web Artifact'
         uses: actions/upload-artifact@v4
         with:
@@ -63,5 +63,5 @@ jobs:
           role-to-assume: arn:aws:iam::143841941773:role/github
       - run: |
           aws s3 sync . s3://horus.sondehub.org/ --delete
-          aws s3 cp --content-type application/wasm ./public/assets/pyodide.asm.wasm s3://horus.sondehub.org/public/assets/pyodide.asm.wasm
+          aws s3 cp --content-type application/wasm ./src/public/assets/pyodide.asm.wasm s3://horus.sondehub.org/assets/pyodide.asm.wasm
           aws cloudfront create-invalidation --distribution-id EGCXXLSXJCNP5  --paths '/*'
