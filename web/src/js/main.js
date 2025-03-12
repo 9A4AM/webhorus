@@ -134,8 +134,33 @@ globalThis.loadSettings = function () {
 
     globalThis.updateRadio()
     globalThis.updateGain()
+    globalThis.rtlaudio()
 
     log_entry(`Loaded settings`, "light")
+}
+
+globalThis.rtlaudio = function(){
+    if (document.getElementById("radioRTL").checked && globalThis.rtlAudioNode){
+        if ( document.getElementById("rtlaudio").checked){
+            globalThis.rtlAudioNode.connect(audioContext.destination)
+        } else {
+            try {
+                globalThis.rtlAudioNode.disconnect(audioContext.destination)
+            } catch (err){
+                console.error(err)
+            }
+        }
+    } else {
+        if (globalThis.rtlAudioNode){
+            try {
+                globalThis.rtlAudioNode.disconnect(audioContext.destination)
+            } catch (err) {
+                console.error(err)
+            }
+            
+        }
+        
+    }
 }
 
 globalThis.addFrame = function (data) {
@@ -597,6 +622,8 @@ globalThis.updateRadio = function () {
     if (audio && document.getElementById("sound_adapter").value != 'placeholder') {
         globalThis.snd_change()
     }
+
+    globalThis.rtlaudio()
 }
 
 function updatedbfs(dBFS){
@@ -839,6 +866,8 @@ globalThis.startAudio = async function (constraint) {
 
 
         }
+
+        globalThis.rtlaudio()
     }
 
     function on_audio(audio_buffer) {
