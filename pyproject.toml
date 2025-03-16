@@ -9,8 +9,10 @@ include = [
 ]
 packages = [
     { include = "webhorus", from="."},
+    { include = "pywenet", from="."},
     { include = "crcmod", from="."},
     { include = "horusdemodlib", from="horusdemodlib"},
+    { include = "rx", from="wenet"},
    
 ]
 

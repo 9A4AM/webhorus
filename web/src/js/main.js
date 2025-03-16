@@ -12,11 +12,13 @@ import "leaflet";
 import { Radio } from "radioreceiver/src/radio/radio";
 import { RTL2832U_Provider } from "radioreceiver/src/rtlsdr/rtl2832u";
 import { Demodulator } from "radioreceiver/src/demod/demodulator";
+import { ComplexDownsampler } from "radioreceiver/src/dsp/resamplers";
+import { concatenateReceivers } from "radioreceiver/src/radio/sample_receiver"
 
-
-const rtl_sdr_rate = 256000;
+// todo changed based on wenet or not 
+const rtl_sdr_rate = 921416; // currently set in main.py as well
 const ssb_bandwidth = 6000;
-const rtl_offset = -3000; // we offset the dial frequency by this much so we can offer some adjustment range
+//const rtl_offset = -3000; // we offset the dial frequency by this much so we can offer some adjustment range
 const rtl_freq_est_lower = 1000;
 const rtl_freq_est_upper = 5000;
 
@@ -217,6 +219,34 @@ globalThis.addFrame = function (data) {
     document.title = "webhorus - " + data['payload_id']
 }
 
+globalThis.addImage = function (data, callsign, id) {
+    let card_div = document.getElementById(callsign+"-"+id)
+    if (card_div == null){
+        const frames_div = document.getElementById("frames")
+        const card = document.createElement("div")
+        card.id = callsign+"-"+id
+        card.classList = "card text-dark bg-light me-3"
+        const cardTitle = document.createElement("div")
+        cardTitle.classList = "card-header h6"
+        cardTitle.innerText = "[" + id + "] " + callsign
+        card.appendChild(cardTitle)
+        const cardBody = document.createElement("div")
+        cardBody.classList = "card-body"
+        card.appendChild(cardBody)
+        const img = document.createElement("img")
+        img.src = URL.createObjectURL((new Blob([data.toJs().buffer],{"type":"image/jpeg"})))
+        cardBody.appendChild(img)
+        frames_div.prepend(card)
+    } else {
+        card_div.getElementsByClassName("card-body")[0].getElementsByTagName("img")[0].src = URL.createObjectURL((new Blob([data.toJs().buffer],{"type":"image/jpeg"})))
+    }
+    document.title = "webhorus - " + callsign
+}
+
+globalThis.addText = function (data) {
+    log_entry(data, "info")
+}
+
 function updateMarker(data) {
     const position = L.latLng(data.latitude, data.longitude)
     // create marker if not exists, otherwise update
@@ -415,16 +445,16 @@ var spectrum_layout = {
     },
     yaxis: {
         type: 'log',
-        autorange: "reversed",
-        tickprefix: "-",
+        //autorange: "reversed",
+        // tickprefix: "-",
         tickfont: {
             size: "9"
         },
-        autorangeoptions: {
-            include: [60, 150],
-            clipmax: 150,
-            clipmin: 0.1
-        }
+        // autorangeoptions: {
+        //     include: [60, 150],
+        //     clipmax: 150,
+        //     clipmin: 0.1
+        // }
     }
 
 }
@@ -432,7 +462,7 @@ globalThis.Plotly.newPlot('spectrum', [{
     y: [],
     x: [],
     mode: 'lines'
-}], spectrum_layout, { responsive: true, staticPlot: true });
+}], spectrum_layout, { responsive: true, staticPlot: false });
 
 globalThis.Plotly.newPlot('plots', [], {
     autosize: true,
@@ -516,30 +546,32 @@ var VERSION
 
 async function init_python() {
     log_entry("Starting python load", "light")
-    const pyodide = await loadPyodide();
+    
 
     await Promise.all([
-        pyodide.loadPackage("./assets/cffi-1.17.1-cp312-cp312-pyodide_2024_0_wasm32.whl"),
-        pyodide.loadPackage("./assets/pycparser-2.22-py3-none-any.whl"),
-        pyodide.loadPackage("./assets/crc-7.1.0-py3-none-any.whl"),
-        pyodide.loadPackage("./assets/idna-3.7-py3-none-any.whl"),
-        pyodide.loadPackage("./assets/charset_normalizer-3.3.2-py3-none-any.whl"),
-        pyodide.loadPackage("./assets/python_dateutil-2.9.0.post0-py2.py3-none-any.whl"),
-        pyodide.loadPackage("./assets/requests-2.32.3-py3-none-any.whl"),
-        pyodide.loadPackage("./assets/six-1.16.0-py2.py3-none-any.whl"),
-        pyodide.loadPackage("./assets/urllib3-2.2.3-py3-none-any.whl"),
-        pyodide.loadPackage("./assets/certifi-2024.12.14-py3-none-any.whl"),
-        pyodide.loadPackage("./assets/webhorus-0.1.0-cp312-cp312-pyodide_2024_0_wasm32.whl")
+        globalThis.pyodide.loadPackage("./assets/cffi-1.17.1-cp312-cp312-pyodide_2024_0_wasm32.whl"),
+        globalThis.pyodide.loadPackage("./assets/pycparser-2.22-py3-none-any.whl"),
+        globalThis.pyodide.loadPackage("./assets/crc-7.1.0-py3-none-any.whl"),
+        globalThis.pyodide.loadPackage("./assets/idna-3.7-py3-none-any.whl"),
+        globalThis.pyodide.loadPackage("./assets/charset_normalizer-3.3.2-py3-none-any.whl"),
+        globalThis.pyodide.loadPackage("./assets/python_dateutil-2.9.0.post0-py2.py3-none-any.whl"),
+        globalThis.pyodide.loadPackage("./assets/requests-2.32.3-py3-none-any.whl"),
+        globalThis.pyodide.loadPackage("./assets/six-1.16.0-py2.py3-none-any.whl"),
+        globalThis.pyodide.loadPackage("./assets/urllib3-2.2.3-py3-none-any.whl"),
+        globalThis.pyodide.loadPackage("./assets/certifi-2024.12.14-py3-none-any.whl"),
+        globalThis.pyodide.loadPackage("./assets/webhorus-0.1.0-cp312-cp312-pyodide_2024_0_wasm32.whl")
     ]);
     log_entry("Python packages loaded", "light")
 
-    pyodide.runPython(await (await fetch("/py/main.py")).text());
+    globalThis.pyodide.runPython(await (await fetch("/py/main.py")).text());
     log_entry("main.py loaded", "light")
 
-    globalThis.write_audio = pyodide.runPython("write_audio")
-    globalThis.fix_datetime = pyodide.runPython("fix_datetime")
-    globalThis.update_tone_spacing = pyodide.runPython("update_tone_spacing")
-    globalThis.start_modem = pyodide.runPython("start_modem")
+    globalThis.write_audio = globalThis.pyodide.runPython("write_audio")
+    globalThis.fix_datetime = globalThis.pyodide.runPython("fix_datetime")
+    globalThis.update_tone_spacing = globalThis.pyodide.runPython("update_tone_spacing")
+    globalThis.start_modem = globalThis.pyodide.runPython("start_modem")
+    globalThis.wenet = globalThis.pyodide.runPython("wenet")
+    globalThis.write_wenet = pyodide.runPython("write_wenet")
     document.getElementById("audio_start").removeAttribute("disabled");
     document.getElementById("audio_start").innerText = "Start"
     VERSION = pyodide.runPython("VERSION")
@@ -666,7 +698,7 @@ globalThis.updateGain = function () {
 globalThis.rtlFreq = function (){
     const rtl_freq = parseFloat(document.getElementById("rtl_freq").value) * 1000000
     if (globalThis.Radio){
-        globalThis.Radio.setFrequency(rtl_freq+rtl_offset)
+        globalThis.Radio.setFrequency(rtl_freq)
         log_entry(`Setting RTL Freq: ${rtl_freq}`, "light")
     }
 }
@@ -758,6 +790,8 @@ globalThis.startAudio = async function (constraint) {
                 
             }
         }
+        
+        
 
         class rtlReceiver {
             constructor() {
@@ -784,98 +818,146 @@ globalThis.startAudio = async function (constraint) {
                 var dBFS = 20 * Math.log10(max);
                 updatedbfs(dBFS)
             }
+            andThen(next){
+                return concatenateReceivers(this, next)
+            }
         }
 
-        globalThis.rtl = new rtlReceiver()
-        rtl.sampleRate = globalThis.audioContext.sampleRate
+        class wenet {
+            constructor() {
+                this.buffer = []
+                this.counter = 0
+                this.resampler = new ComplexDownsampler(rtl_sdr_rate,921416,1)
+            }
+            setSampleRate(rate) {
+            }
+            receiveSamples(I,Q,frequency){
+                //const out_resample = this.resampler.downsample(I,Q)
+                // var _I = out_resample[0]
+                // var _Q = out_resample[1]
+                var _I = I;
+                var _Q = Q;
+                for (var x=0;x<_I.length;x++){
+                    this.buffer.push(_I[x]);
+                    this.buffer.push(_Q[x]);
+                }
+                while (this.buffer.length > globalThis.wenet.nin * 2){
+                    var to_modem = this.buffer.splice(0,globalThis.wenet.nin *2)
 
-        globalThis.usbDemod = new Demodulator(rtl_sdr_rate)
-        globalThis.usbDemod.setMode({
-            scheme: "USB",
-            bandwidth: ssb_bandwidth * 2,
-            squelch: 0
-        })
+                    globalThis.write_wenet(to_modem)
+                    
+                }
 
-        globalThis.usbDemod.player = globalThis.rtl
+                globalThis.Plotly.extendTraces('snr', {
+                    y: [[globalThis.wenet.wenet.stats.snr_est]],
+                    x: [[new Date().toISOString()]]
+                }, [0], 256)
+
+                var fft = globalThis.pyodide.runPython("list(wenet.wenet.fsk.fft_est[0:wenet.wenet.fsk.Ndft//2])").toJs()
+                const spectrum_data = {
+                    y: [fft], // todo fix scale
+                    x: [[...Array(fft.length).keys()].map(x => ((x*(rtl_sdr_rate/2/fft.length))+(globalThis.Radio.getFrequency()-rtl_sdr_rate))/1000/1000)]
+                };
+                globalThis.Plotly.update('spectrum',
+                    spectrum_data,
+                    spectrum_layout
+                )
+            }
+            andThen(next){
+                return concatenateReceivers(this, next)
+            }
+           
+        }
+
+        // globalThis.rtl = new rtlReceiver()
+        // rtl.sampleRate = globalThis.audioContext.sampleRate
+
+        // globalThis.usbDemod = new Demodulator(rtl_sdr_rate)
+        // globalThis.usbDemod.setMode({
+        //     scheme: "USB",
+        //     bandwidth: ssb_bandwidth * 2,
+        //     squelch: 0
+        // })
+
+        // globalThis.usbDemod.player = globalThis.rtl
 
         globalThis.Radio = new Radio(
             new RTL2832U_Provider(),
-            globalThis.usbDemod.andThen(new dbfsCalc()),
+            (new wenet()),
             rtl_sdr_rate, // sample rate
         )
-        globalThis.Radio.setSampleRate(rtl_sdr_rate)
         globalThis.rtlFreq()
         globalThis.updateGain()
 
         globalThis.Radio.start()
-        globalThis.nin = globalThis.start_modem(globalThis.audioContext.sampleRate, false, rtl_freq_est_lower, rtl_freq_est_upper)
+        //globalThis.nin = globalThis.start_modem(globalThis.audioContext.sampleRate, false, rtl_freq_est_lower, rtl_freq_est_upper)
 
        
-        horusNode = new AudioWorkletNode(globalThis.audioContext, 'horus', {
-            processorOptions: {
-                nin: globalThis.nin
-            }
-        });
+        // horusNode = new AudioWorkletNode(globalThis.audioContext, 'horus', {
+        //     processorOptions: {
+        //         nin: globalThis.nin
+        //     }
+        // });
 
 
 
-        globalThis.rtlAudioNode.connect(horusNode);
+        // globalThis.rtlAudioNode.connect(horusNode);
 
-        horusNode.port.onmessage = (e) => {
-            on_audio(e.data)
-        }
-        globalThis.audioContext.resume()
+        // horusNode.port.onmessage = (e) => {
+        //     on_audio(e.data)
+        // }
+        // globalThis.audioContext.resume()
 
-        // setup spectogram
-        activeAnalyser = globalThis.audioContext.createAnalyser();
-        activeAnalyser.chan
-        activeAnalyser.fftSize = fftSize;
-        activeAnalyser.smoothingTimeConstant = 0.25;
-        globalThis.rtlAudioNode.connect(activeAnalyser);
-
-
-
-        if (activeAnalyser) {
-            let analyser = activeAnalyser;
-            const maxdB = analyser.maxDecibels;
-            const mindB = analyser.minDecibels;
-            globalThis.bufferLength = analyser.frequencyBinCount;
-            const step = (globalThis.audioContext.sampleRate / 2) / globalThis.bufferLength
-            const x_values = [...Array(globalThis.bufferLength).keys()].map((x) => (x + 1) * step)
-
-            // get closest index to x hz to limit plot size
-            globalThis.max_index = x_values.reduce((prev, curr, index) => { if (curr < ssb_bandwidth) { return index } else { return prev } }, 0)
-            globalThis.filtered_x_values = x_values.slice(0, globalThis.max_index).map((x)=>rtl_offset+x)
-
-            if (globalThis.analyserUpdate) {
-                clearInterval(globalThis.analyserUpdate)
-            }
-            globalThis.analyserUpdate = setInterval(() => {
-                const freqData = new Float32Array(globalThis.bufferLength);
-                analyser.getFloatFrequencyData(freqData);
-                const spectrum_data = {
-                    y: [freqData.slice(0, globalThis.max_index).map((x) => Math.max(Math.min(150, Math.abs(x)), 0.1))],
-                    x: [globalThis.filtered_x_values]
-                };
-                globalThis.Plotly.update('spectrum',
-                    spectrum_data,
-                    spectrum_layout)
-            }, 200)
-            log_entry(`FFT Started`, "light")
+        // // setup spectogram
+        // activeAnalyser = globalThis.audioContext.createAnalyser();
+        // activeAnalyser.chan
+        // activeAnalyser.fftSize = fftSize;
+        // activeAnalyser.smoothingTimeConstant = 0.25;
+        // globalThis.rtlAudioNode.connect(activeAnalyser);
 
 
 
-        }
+        // if (activeAnalyser) {
+        //     let analyser = activeAnalyser;
+        //     const maxdB = analyser.maxDecibels;
+        //     const mindB = analyser.minDecibels;
+        //     globalThis.bufferLength = analyser.frequencyBinCount;
+        //     const step = (globalThis.audioContext.sampleRate / 2) / globalThis.bufferLength
+        //     const x_values = [...Array(globalThis.bufferLength).keys()].map((x) => (x + 1) * step)
 
-        globalThis.rtlaudio()
+        //     // get closest index to x hz to limit plot size
+        //     globalThis.max_index = x_values.reduce((prev, curr, index) => { if (curr < ssb_bandwidth) { return index } else { return prev } }, 0)
+        //     globalThis.filtered_x_values = x_values.slice(0, globalThis.max_index).map((x)=>rtl_offset+x)
+
+        //     if (globalThis.analyserUpdate) {
+        //         clearInterval(globalThis.analyserUpdate)
+        //     }
+        //     globalThis.analyserUpdate = setInterval(() => {
+        //         const freqData = new Float32Array(globalThis.bufferLength);
+        //         analyser.getFloatFrequencyData(freqData);
+        //         const spectrum_data = {
+        //             y: [freqData.slice(0, globalThis.max_index).map((x) => Math.max(Math.min(150, Math.abs(x)), 0.1))],
+        //             x: [globalThis.filtered_x_values]
+        //         };
+        //         globalThis.Plotly.update('spectrum',
+        //             spectrum_data,
+        //             spectrum_layout)
+        //     }, 200)
+        //     log_entry(`FFT Started`, "light")
+
+
+
+        // }
+
+       // globalThis.rtlaudio()
     }
 
     function on_audio(audio_buffer) {
 
        
 
-        globalThis.nin = write_audio(audio_buffer)
-        horusNode.port.postMessage(globalThis.nin)
+        // globalThis.nin = write_audio(audio_buffer)
+        // horusNode.port.postMessage(globalThis.nin)
 
 
     }
@@ -1030,6 +1112,8 @@ if (navigator.usb){
 }
 
 globalThis.loadSettings();
+globalThis.pyodide = await loadPyodide();
+
 loadMapPicker()
 loadTrackMap()
 init_python();

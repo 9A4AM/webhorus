@@ -1,3 +1,9 @@
 [submodule "horusdemodlib"]
 	path = horusdemodlib
 	url = https://github.com/projecthorus/horusdemodlib.git
+[submodule "wenet"]
+	path = wenet
+	url = https://github.com/projecthorus/wenet.git
+[submodule "ssdv"]
+	path = ssdv
+	url = https://github.com/fsphil/ssdv.git
