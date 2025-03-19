@@ -5,8 +5,7 @@ from _fsk_cffi.lib import fsk_create, fsk_demod_sd, fsk_nin, fsk_get_demod_stats
 import enum
 import logging
 from crc import Calculator,  Configuration
-
-
+import collections
 
 def crc16(data):
     calculator = Calculator(Configuration(
@@ -60,11 +59,9 @@ class Modem():
 
         fsk_demod_sd(self.fsk, sdbuf, modbuf)
         
-        packets = []
 
-        for x in sdbuf:
-            if packet := self.drs232_ldpc.write(x):
-                packets.append(packet)
+
+        packets = self.drs232_ldpc.write(sdbuf)
     
         return packets
 
@@ -104,7 +101,7 @@ class DRS232_LDPC():
         self.ldpc.H_rows = H_rows
         self.ldpc.H_cols = H_cols
         self.state = DRS232_STATE.LOOK_FOR_UW
-        self.bitbuffer = bytearray(UW_BITS)
+        self.bitbuffer = 0
         self.symbol_buf_no_rs232 = [0.0]*SYMBOLS_PER_PACKET
         self.symbol_buf= [0.0]*SYMBOLS_PER_PACKET
         self.llr = drs232_ffi.new("float[]", SYMBOLS_PER_PACKET)
@@ -114,75 +111,67 @@ class DRS232_LDPC():
         self.count_packet = 0
         self.count_packet_error = 0
 
-    uw = [
-        0, 1, 1, 0, 1, 0, 1, 0, 1, 1,
-        0, 1, 0, 1, 1, 0, 0, 1, 1, 1,
-        0, 1, 1, 1, 1, 0, 1, 1, 1, 1,
-        0, 1, 0, 0, 0, 0, 0, 0, 0, 1,
-    ]
+    uw = 0b0110101011010110011101111011110100000001
 
     """Processes a bit"""
 
-    def write(self, symbol):
-        bit = symbol < 0
+    def write(self, sdbuf):
+        packets = []
+        for symbol in sdbuf:
 
-        next_state = self.state
+            if self.state == DRS232_STATE.LOOK_FOR_UW:
+                bit = symbol < 0
+                self.bitbuffer = (self.bitbuffer << 1 | bit) & 0xffff_ffff_ff # 40 bits
 
-        if self.state == DRS232_STATE.LOOK_FOR_UW:
-            del self.bitbuffer[0]
-            self.bitbuffer.append(bit)
+                # check if we match uw
+                errors = (self.bitbuffer ^ self.uw).bit_count()
 
+                if errors <= UW_ALLOWED_ERRORS:
+                    self.ind = 0
+                    self.state = DRS232_STATE.COLLECT_PACKET
+                    logging.debug("Next state COLLECT_PACKET")
+                    
+                continue
+                    
+            
+            if self.state == DRS232_STATE.COLLECT_PACKET:
+                self.symbol_buf[self.ind] = symbol
+                self.ind += 1
 
-            # check if we match uw
-            score = 0
-            for i in range(len(self.bitbuffer)):
-                if self.bitbuffer[i] == self.uw[i]:
-                    score += 1
+                if self.ind == SYMBOLS_PER_PACKET:
+                    # enough bits, remove rs232 sync symbols
+                    k=0
+                    for i in range(0,SYMBOLS_PER_PACKET,BITS_PER_BYTE):
+                        for j in range(8):
+                            self.symbol_buf_no_rs232[k+j] = self.symbol_buf[i+7-j+1]
+                        k += 8
 
-            if score >= UW_BITS - UW_ALLOWED_ERRORS:
-                self.ind = 0
-                next_state = DRS232_STATE.COLLECT_PACKET
-                logging.debug("Next state COLLECT_PACKET")
-        
-        if self.state == DRS232_STATE.COLLECT_PACKET:
-            self.symbol_buf[self.ind] = symbol
-            self.ind += 1
+                    sd_to_llr(self.llr, self.symbol_buf_no_rs232, CODELENGTH)
+                    _iter = run_ldpc_decoder(self.ldpc, self.unpacked_packet, self.llr, self.parityCheckCount)
 
-            if self.ind == SYMBOLS_PER_PACKET:
-                # enough bits, remove rs232 sync symbols
-                k=0
-                for i in range(0,SYMBOLS_PER_PACKET,BITS_PER_BYTE):
-                    for j in range(8):
-                        self.symbol_buf_no_rs232[k+j] = self.symbol_buf[i+7-j+1]
-                    k += 8
+                    for i in range(BYTES_PER_PACKET+CRC_BYTES):
+                        abyte = 0
+                        for j in range(8):
+                            abyte |= self.unpacked_packet[8*i+j] << (7-j)
+                        self.packet[i] = abyte
+                    
+                    self.count_packet += 1
+                    
+                    _packet = bytes(ffi.buffer(self.packet))
+                    rx_checksum = crc16(_packet[:BYTES_PER_PACKET]).to_bytes(2,"little")
+                    tx_checksum = _packet[BYTES_PER_PACKET:BYTES_PER_PACKET+2]
 
-                sd_to_llr(self.llr, self.symbol_buf_no_rs232, CODELENGTH)
-                _iter = run_ldpc_decoder(self.ldpc, self.unpacked_packet, self.llr, self.parityCheckCount)
+                    if self.count_packet % 40 == 0:
+                        logging.info(f"packets: {self.count_packet} packet_errors:{self.count_packet_error} PER: {self.count_packet_error/self.count_packet if self.count_packet > 0 else "."} iter: {_iter}")
 
-                for i in range(BYTES_PER_PACKET+CRC_BYTES):
-                    abyte = 0
-                    for j in range(8):
-                        abyte |= self.unpacked_packet[8*i+j] << (7-j)
-                    self.packet[i] = abyte
-                
-                self.count_packet += 1
-                
-                _packet = bytes(ffi.buffer(self.packet))
-                rx_checksum = crc16(_packet[:BYTES_PER_PACKET]).to_bytes(2,"little")
-                tx_checksum = _packet[BYTES_PER_PACKET:BYTES_PER_PACKET+2]
-
-                if self.count_packet % 20 == 0:
-                   logging.info(f"packets: {self.count_packet} packet_errors:{self.count_packet_error} PER: {self.count_packet_error/self.count_packet if self.count_packet > 0 else "."} iter: {_iter}")
-
-                next_state = DRS232_STATE.LOOK_FOR_UW
-                logging.debug("Next state LOOK_FOR_UW")
-                if (rx_checksum == tx_checksum):
-                    self.state = next_state
-                    logging.debug(_packet)
-                    return _packet
-                else:
-                    logging.debug("checksum failed")
-                    logging.debug(rx_checksum)
-                    logging.debug(tx_checksum)
-                    self.count_packet_error += 1
-        self.state = next_state
+                    self.state = DRS232_STATE.LOOK_FOR_UW
+                    logging.debug("Next state LOOK_FOR_UW")
+                    if (rx_checksum == tx_checksum):
+                        logging.debug("packet")
+                        packets.append(_packet)
+                    else:
+                        logging.debug("checksum failed")
+                        logging.debug(rx_checksum)
+                        logging.debug(tx_checksum)
+                        self.count_packet_error += 1
+        return packets

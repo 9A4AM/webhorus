@@ -3,6 +3,8 @@ import { defineConfig } from 'vite'
 import { fileURLToPath } from "url";
 import copy from 'rollup-plugin-copy'
 import { VitePWA } from 'vite-plugin-pwa'
+import prebundleWorkers from "vite-plugin-prebundle-workers";
+
 
 const PYODIDE_EXCLUDE = [
     "!**/*.{md,html}",
@@ -20,9 +22,17 @@ export function viteStaticCopyPyodide() {
         
 }
 export default defineConfig({
-    define: {
-        globalThis: 'window'
+    // define: {
+    //     globalThis: 'window'
+    // },
+    esbuild: {
+        supported: {
+          'top-level-await': true //browsers can handle top-level-await features
+        },
     },
+    worker: {
+        format: "es"
+      },
     root: resolve(__dirname, 'src'),
     server: {
         host: '0.0.0.0'
@@ -66,6 +76,7 @@ export default defineConfig({
         noDiscovery: true
     },
     plugins: [
+
         copy(
             {
                 targets: [

@@ -2,3 +2,150 @@
 @import "~bootstrap/scss/bootstrap";
 
 @import "~leaflet/dist/leaflet.css";
+
+
+html,
+body {
+    height: 100vh;
+    width: 100vw
+}
+
+nav {
+    width: 100vw !important;
+    background-color: white
+}
+
+.navbar-nav {
+    background-color: white
+}
+
+main {
+    max-width: none !important;
+    padding-top: 10px;
+    padding-top: 80px;
+}
+
+#spectrum,
+#snr {
+    height: 150px
+}
+
+#location_picker{
+    width:auto;height: 400px
+}
+
+#trackMap {
+    height: 100vh;
+    width: 100vw;
+    position: fixed;
+    left: 0;
+    top: 90px;
+}
+
+#frames:before {
+    content: "";
+    z-index: 1;
+    top: 0;
+    right: 0;
+    position: absolute;
+    pointer-events: none;
+    height: 100%;
+    width: 200px;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgb(255, 255, 255) 85%, rgb(255, 255, 255) 100%);
+}
+
+#frames {
+    min-height: 200px;
+    white-space: nowrap;
+    overflow-x: auto;
+    margin-right: -10000000px;
+    width: 100%
+}
+
+.card-body {
+    overflow: hidden;
+    width: 350px;
+    text-wrap: auto;
+
+}
+
+.card-body img {
+    width: 100%;
+}
+
+.card {
+    vertical-align: top;
+    transition: all 1s, background-color 2s;
+    width: fit-content !important;
+    width: calc-size(fit-content, size) !important;
+    /* firefox doesn't support this */
+    display: inline-block !important;
+}
+
+.card-body table tr td a {
+    background-color: inherit;
+    /* not sure why bootstrap is even sitting this... */
+}
+
+@starting-style {
+    .card {
+        opacity: 0;
+        width: 0px !important;
+    }
+}
+
+.plotlyhack {
+    width: 95% !important;
+    margin: auto;
+}
+
+/* hack to stop the 1px gap on retina screens */
+.leaflet-container img.leaflet-tile {
+    mix-blend-mode: normal !important;
+
+}
+
+.alert {
+    overflow-wrap: anywhere;
+}
+
+#rx_log .alert {
+    margin-bottom: 3px !important;
+    padding-bottom: 5px !important;
+    padding-top: 5px !important;
+}
+
+
+/* .nav-item {
+    padding-left: 10px;
+} */
+
+.nav-link {
+    color: black !important;
+    background-color: white !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+}
+
+.nav-link.active {
+    color: white !important;
+    background-color: #0d6efd !important;
+}
+
+.card-large-image {
+    width: 100vw;
+    height: 100vh;
+    background-color: #000000cc;
+    z-index: 2000 !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+.card-large-image img {
+    display: block;
+    padding: 50px;
+    width: 100%;
+    height: auto;
+    margin: auto;
+}

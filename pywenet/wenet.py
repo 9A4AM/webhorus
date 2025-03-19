@@ -4,9 +4,9 @@ import logging
 from rx import WenetPackets
 from rx.WenetPackets import WENET_PACKET_TYPES, packet_to_string, ssdv_packet_info, ssdv_packet_string
 import traceback
-
+import base64
 class Wenet():
-    def __init__(self, samplerate=115177*8, partialupdate=1, callback_ssdv_image=None, callback_log=None, callback_gps=None):
+    def __init__(self, samplerate=115177*8, partialupdate=1):
         print(samplerate)
         self.wenet = Modem(samplerate)
         self.current_image = -1
@@ -15,52 +15,52 @@ class Wenet():
         self.current_packet_count = 0
         self.img_data = SSDV()
 
-        self.callback_ssdv_image = callback_ssdv_image
-        self.callback_log = callback_log
-        self.callback_gps = callback_gps
 
         self.partialupdate=partialupdate
+        self.upload_buffer = []
+        
+
     
     @property
     def nin(self):
         return self.wenet.nin
     
     def log_packet(self, packet):
-        logging.info(packet_to_string(packet))
-        if self.callback_log:
-            self.callback_log(packet_to_string(packet))
-    
+        logging.debug(packet_to_string(packet))
+        return packet_to_string(packet)
     def write(self,data: bytes):
         packets = self.wenet.demodulate(data)
         if packets:
-            logging.debug(packets)
             for packet in packets:
+                    
                 # try:
                     packet = packet[:-2] # remove crc
                     packet_type = WenetPackets.decode_packet_type(packet)
                     if packet_type == WENET_PACKET_TYPES.IDLE:
                         continue
                     elif packet_type == WENET_PACKET_TYPES.TEXT_MESSAGE:
-                        self.log_packet(packet)
+                        return ["log",self.log_packet(packet)]
+                        
                     elif packet_type == WENET_PACKET_TYPES.SEC_PAYLOAD_TELEMETRY:
                         self.log_packet(packet)
                     elif packet_type == WENET_PACKET_TYPES.GPS_TELEMETRY: # this goes to sondehub
-                        logging.info(WenetPackets.gps_telemetry_decoder(packet))
-                        if self.callback_gps:
-                            self.callback_gps(WenetPackets.gps_telemetry_decoder(packet))
+                        logging.debug(WenetPackets.gps_telemetry_decoder(packet))
+                        return(["gps",WenetPackets.gps_telemetry_decoder(packet)])
                     elif packet_type == WENET_PACKET_TYPES.ORIENTATION_TELEMETRY:
-                        self.log_packet(packet)
+                        return ["log",self.log_packet(packet)]
                     elif packet_type == WENET_PACKET_TYPES.IMAGE_TELEMETRY:
-                        self.log_packet(packet)
+                        return ["log",self.log_packet(packet)]
 
                     elif packet_type == WENET_PACKET_TYPES.SSDV:
-                        continue
                         packet_info = ssdv_packet_info(packet)
                         packet_as_string = ssdv_packet_string(packet)
+                        return_image= None
 
                         if packet_info['error'] != 'None':
                             logging.error(packet_info['error'])
                             continue
+                        self.upload_buffer.append(base64.b64encode(packet).decode('ascii')) # this really should be decoupled from here but its an easy solution for the moment
+
 
                         if (packet_info['image_id'] != self.current_image) or (packet_info['callsign'] != self.current_callsign) :
                             # Attempt to decode current image if we have enough packets.
@@ -68,8 +68,7 @@ class Wenet():
                             if self.current_packet_count > 0:
 
                                 image_output = self.img_data.image
-                                if image_output and self.callback_ssdv_image:
-                                    self.callback_ssdv_image(image_output, self.current_callsign, self.current_image)
+                                return_image = ["image", [image_output, self.current_callsign, self.current_image, self.upload_buffer]]
                                 
                                 self.img_data = SSDV()
                             else:
@@ -90,8 +89,10 @@ class Wenet():
                             if self.current_packet_count % self.partialupdate == 0:
 
                                 image_output = self.img_data.image
-                                if image_output and self.callback_ssdv_image:
-                                    self.callback_ssdv_image(image_output, self.current_callsign, self.current_image)
+                                return_image = ["image", [image_output, self.current_callsign, self.current_image, self.upload_buffer]]
+                                self.upload_buffer = []
+                        if return_image:
+                            return return_image
                 # except KeyboardInterrupt:
                 #     raise KeyboardInterrupt
                 # except:

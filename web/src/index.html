@@ -11,102 +11,22 @@
     <meta name="apple-mobile-web-app-title" content="webhorus" />
     <title>webhorus</title>
     <style>
-        html,
-        body {
-            height: 100%;
-        }
-
-        #frames:before {
-            content: "";
-            z-index: 1;
-            top: 0;
-            right: 0;
-            position: absolute;
-            pointer-events: none;
-            height: 100%;
-            width: 200px;
-            background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgb(255, 255, 255) 85%, rgb(255, 255, 255) 100%);
-        }
-
-        #frames {
-            min-height: 200px;
-        }
-
-        .card-body {
-            overflow: hidden;
-            max-width: 300px;
-            text-wrap: auto;
-
-        }
-
-        .card-body img {
-           width: 100%;
-        }
-
-        .card {
-            transition: all 1s, background-color 2s;
-            width: fit-content !important;
-            width: calc-size(fit-content, size) !important;
-            /* firefox doesn't support this */
-            display: inline-block !important;
-        }
-
-        .card-body table tr td a {
-            background-color: inherit;
-            /* not sure why bootstrap is even sitting this... */
-        }
-
-        @starting-style {
-            .card {
-                opacity: 0;
-                width: 0px !important;
-            }
-        }
-
-        .plotlyhack {
-            width: 95% !important;
-            margin: auto;
-        }
-
-        /* hack to stop the 1px gap on retina screens */
-        .leaflet-container img.leaflet-tile {
-            mix-blend-mode: normal !important;
-
-        }
-
-        .alert {
-            overflow-wrap: anywhere;
-        }
-
-        /* .nav-item {
-            padding-left: 10px;
-        } */
-
-        .nav-link {
-            color: black !important;
-            background-color: white !important;
-            padding-left: 10px !important;
-            padding-right: 10px !important;
-        }
-
-        .nav-link.active {
-            color: white !important;
-            background-color: #0d6efd !important;
-        }
+    
     </style>
 </head>
 
-<body style="height: 100vh;width:100vw ">
+<body >
     <header>
 
     </header>
-    <nav class="navbar fixed-top navbar-light navbar-expand-md" style="width: 100vw !important;background-color:white">
+    <nav class="navbar fixed-top navbar-light navbar-expand-md" >
         <div class="container-flex" style="width:100vw">
             <div class="row">
                 <div class="col-auto">
-                    <a class="navbar-brand ps-4" href="#">webhorus</a>
+                    <a class="navbar-brand ps-4" href="#" id="webtitle">webhorus</a>
                     <button id="audio_start" class="btn btn-primary" onclick="startAudio()"
                         disabled="true">Loading</button>
+                        <span id="wenet_latency"></span>
                 </div>
                 <div class="col-auto ms-auto  pe-4">
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar"
@@ -115,7 +35,7 @@
                     </button>
                 </div>
                 <div class="collapse navbar-collapse nav-pills col-auto justify-content-end pe-4" id="navbar">
-                    <ul class="navbar-nav  mb-lg-0" id="myTab" role="tablist" style="background-color:white">
+                    <ul class="navbar-nav  mb-lg-0" id="myTab" role="tablist" >
                         <li class="nav-item" role="presentation">
                             <a class="nav-link active" id="about-tab" data-bs-toggle="tab"
                                 data-bs-target="#about-tab-pane" aria-controls="about-tab-pane" aria-selected="true"
@@ -163,7 +83,7 @@
     </nav>
 
     <!-- Begin page content -->
-    <main role="main" class="container gap-4 d-grid " style="max-width:none; padding-top:10px; padding-top:80px;  ">
+    <main role="main" class="container gap-4 d-grid " >
         <div class="tab-content" id="appTabs">
             <div class="tab-pane show active justify-content-center" id="about-tab-pane" role="tabpanel" tabindex="0">
                 <div class="row mt-3">
@@ -185,7 +105,7 @@
                                 href="https://github.com/projecthorus/webhorus">Project Horus GitHub</a>
                         </p>
                         <p>
-                            RTL-SDR is only available on browsers that support Web USB API which currently is only Chrome and Chrome based browsers. RTL-SDR support is provided through the extremely well written libraries by <a href="https://jacobo.tarrio.org/">Jacobo Tarrío</a> from their <a href="https://radio.ea1iti.es/">Radio Receiver</a> project 
+                            RTL-SDR is only available on browsers that support Web USB API which currently is only Chrome and Chrome based browsers. RTL-SDR support is provided through the extremely well written libraries by <a href="https://jacobo.tarrio.org/">Jacobo Tarrío</a> from their <a href="https://radio.ea1iti.es/">Radio Receiver</a> project. Wenet can also be decoded by selecting "RTL-SDR (Wenet)" in the General Configuration.
                         </p>
                         <div class="alert alert-warning">Issues have been reported when using Firefox/Gecko based
                             browsers
@@ -284,7 +204,7 @@
                                         <label class="form-label col-form-label" for="tone_spacing">Radio</label>
                                         <div class="form-check">
                                             <input class="form-check-input" type="radio" name="radioType"
-                                                id="radioAudio" value="audio" checked
+                                                id="radioAudio" value="radioAudio" checked
                                                 onchange="saveSettings();updateRadio();">
                                             <label class="form-check-label" for="radioAudio">
                                                 Audio input
@@ -292,9 +212,16 @@
                                         </div>
                                         <div class="form-check">
                                             <input class="form-check-input" type="radio" name="radioType" id="radioRTL" disabled
-                                                value="rtl" onchange="saveSettings();updateRadio();">
+                                                value="radioRTL" onchange="saveSettings();updateRadio();">
                                             <label class="form-check-label" for="radioRTL">
-                                                RTL-SDR
+                                                RTL-SDR (Horus)
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="radioType" id="radioWenet" disabled
+                                                value="radioWenet" onchange="saveSettings();updateRadio();">
+                                            <label class="form-check-label" for="radioWenet">
+                                                RTL-SDR (Wenet)
                                             </label>
                                         </div>
                                     </div>
@@ -408,6 +335,12 @@
                                             <label class="form-check-label " for="rtlaudio">Listen to audio (may be loud)</label>
 
                                         </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="rtlbiast"
+                                                onclick="saveSettings();updateBiasT()" onchange="saveSettings();updateBiasT()">
+                                            <label class="form-check-label " for="rtlbiast">Enable Bias T</label>
+
+                                        </div>
                                     </div>
                                    
                                 </div>
@@ -422,21 +355,19 @@
             <div class="tab-pane justify-content-center" id="frames-tab-pane" role="tabpanel" tabindex="0">
 
 
-                <div id="spectrum" class="col-md-12 plotlyhack" style="height:150px">
+                <div id="spectrum" class="col-md-12 plotlyhack" >
                 </div>
-                <div id="snr" class="col-md-12 plotlyhack" style="height:150px">
+                <div id="snr" class="col-md-12 plotlyhack" >
                 </div>
                 <div class="col-md-12" style="position:relative;">
 
-                    <div id="frames"
-                        style="white-space:nowrap;overflow-x: auto; margin-right: -100000000px; width:100%">
+                    <div id="frames">
                     </div>
 
                 </div>
             </div>
             <div class="tab-pane justify-content-center" id="map-tab-pane" role="tabpanel" tabindex="0">
-                <div class="col-md-12" id="trackMap"
-                    style="height:100vh; width:100vw; position:fixed; left:0; top:90px;">
+                <div class="col-md-12" id="trackMap">
                 </div>
             </div>
 
@@ -467,7 +398,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div id="location_picker" style="width:auto;height: 400px">
+                    <div id="location_picker">
 
                     </div>
                 </div>

@@ -20,4 +20,3 @@ Web dev
 yarn install
 yarn dev
 ```
-

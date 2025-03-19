@@ -15,10 +15,13 @@ import { Demodulator } from "radioreceiver/src/demod/demodulator";
 import { ComplexDownsampler } from "radioreceiver/src/dsp/resamplers";
 import { concatenateReceivers } from "radioreceiver/src/radio/sample_receiver"
 
-// todo changed based on wenet or not 
-const rtl_sdr_rate = 921416; // currently set in main.py as well
+import { start_wenet, stop_wenet } from "./wenet"
+
+
+// these only impact horus - not wenet
+const rtl_sdr_rate = 256000; 
 const ssb_bandwidth = 6000;
-//const rtl_offset = -3000; // we offset the dial frequency by this much so we can offer some adjustment range
+const rtl_offset = -3000; // we offset the dial frequency by this much so we can offer some adjustment range
 const rtl_freq_est_lower = 1000;
 const rtl_freq_est_upper = 5000;
 
@@ -90,25 +93,29 @@ function loadTrackMap() {
 }
 
 import { loadPyodide } from "pyodide";
+var settings_loaded = false;
 
 globalThis.saveSettings = function () {
-    localStorage.setItem("sound_adapter", document.getElementById("sound_adapter").value)
-    localStorage.setItem("callsign", document.getElementById("callsign").value)
-    localStorage.setItem("uploader_radio", document.getElementById("uploader_radio").value)
-    localStorage.setItem("uploader_antenna", document.getElementById("uploader_antenna").value)
-    localStorage.setItem("uploader_lat", document.getElementById("uploader_lat").value)
-    localStorage.setItem("uploader_lon", document.getElementById("uploader_lon").value)
-    localStorage.setItem("uploader_alt", document.getElementById("uploader_alt").value)
-    localStorage.setItem("upload_sondehub", document.getElementById("upload_sondehub").checked)
-    localStorage.setItem("uploader_position", document.getElementById("uploader_position").checked)
-    localStorage.setItem("dial", document.getElementById("dial").value)
-    localStorage.setItem("tone_spacing", document.getElementById("tone_spacing").value)
-    localStorage.setItem("rtl_freq", document.getElementById("rtl_freq").value)
-    localStorage.setItem("gain", document.getElementById("gain").value)
-    localStorage.setItem("rtl", document.getElementById("radioRTL").checked)
-    localStorage.setItem("rtlaudio", document.getElementById("rtlaudio").checked)
-    log_entry(`Saved settings`, "light")
-    report_position()
+    if (settings_loaded){
+        localStorage.setItem("sound_adapter", document.getElementById("sound_adapter").value)
+        localStorage.setItem("callsign", document.getElementById("callsign").value)
+        localStorage.setItem("uploader_radio", document.getElementById("uploader_radio").value)
+        localStorage.setItem("uploader_antenna", document.getElementById("uploader_antenna").value)
+        localStorage.setItem("uploader_lat", document.getElementById("uploader_lat").value)
+        localStorage.setItem("uploader_lon", document.getElementById("uploader_lon").value)
+        localStorage.setItem("uploader_alt", document.getElementById("uploader_alt").value)
+        localStorage.setItem("upload_sondehub", document.getElementById("upload_sondehub").checked)
+        localStorage.setItem("uploader_position", document.getElementById("uploader_position").checked)
+        localStorage.setItem("rtlbiast", document.getElementById("rtlbiast").checked)
+        localStorage.setItem("dial", document.getElementById("dial").value)
+        localStorage.setItem("tone_spacing", document.getElementById("tone_spacing").value)
+        localStorage.setItem("rtl_freq", document.getElementById("rtl_freq").value)
+        localStorage.setItem("gain", document.getElementById("gain").value)
+        localStorage.setItem("radio", document.querySelector('input[name="radioType"]:checked').value)
+        localStorage.setItem("rtlaudio", document.getElementById("rtlaudio").checked)
+        log_entry(`Saved settings`, "light")
+        report_position()
+    }
 }
 
 globalThis.loadSettings = function () {
@@ -118,50 +125,50 @@ globalThis.loadSettings = function () {
     if (localStorage.getItem("uploader_lat")) { document.getElementById("uploader_lat").value = localStorage.getItem("uploader_lat") }
     if (localStorage.getItem("uploader_lon")) { document.getElementById("uploader_lon").value = localStorage.getItem("uploader_lon") }
     if (localStorage.getItem("uploader_alt")) { document.getElementById("uploader_alt").value = localStorage.getItem("uploader_alt") }
-    if (localStorage.getItem("upload_sondehub")) { document.getElementById("upload_sondehub").checked = localStorage.getItem("upload_sondehub") }
-    if (localStorage.getItem("uploader_position")) { document.getElementById("uploader_position").checked = localStorage.getItem("uploader_position") }
+    if (localStorage.getItem("upload_sondehub")) { document.getElementById("upload_sondehub").checked = (localStorage.getItem("upload_sondehub") == 'true') }
+    if (localStorage.getItem("uploader_position")) { document.getElementById("uploader_position").checked = (localStorage.getItem("uploader_position") == 'true') }
     if (localStorage.getItem("dial")) { document.getElementById("dial").value = localStorage.getItem("dial") }
     if (localStorage.getItem("tone_spacing")) { document.getElementById("tone_spacing").value = localStorage.getItem("tone_spacing") }
     if (localStorage.getItem("rtl_freq")) { document.getElementById("rtl_freq").value = localStorage.getItem("rtl_freq") }
     if (localStorage.getItem("gain")) { document.getElementById("gain").value = localStorage.getItem("gain") }
-    if (localStorage.getItem("rtlaudio")) { document.getElementById("rtlaudio").checked = localStorage.getItem("rtlaudio") }
+    if (localStorage.getItem("rtlaudio")) { document.getElementById("rtlaudio").checked = (localStorage.getItem("rtlaudio") == 'true') }
+    if (localStorage.getItem("rtlbiast")) { document.getElementById("rtlbiast").checked = (localStorage.getItem("rtlbiast") == 'true') }
 
-    if (localStorage.getItem("rtl") == 'true') {
-        document.getElementById("radioRTL").checked = true;
-        document.getElementById("radioAudio").checked = false;
-    } else {
-        document.getElementById("radioRTL").checked = false;
-        document.getElementById("radioAudio").checked = true;
+    
+    if (localStorage.getItem("radio")) {
+        const radio = localStorage.getItem("radio");
+        document.getElementById(radio).click()
     }
 
     globalThis.updateRadio()
     globalThis.updateGain()
     globalThis.rtlaudio()
+    globalThis.updateBiasT()
 
     log_entry(`Loaded settings`, "light")
 }
 
-globalThis.rtlaudio = function(){
-    if (document.getElementById("radioRTL").checked && globalThis.rtlAudioNode){
-        if ( document.getElementById("rtlaudio").checked){
+globalThis.rtlaudio = function () {
+    if (document.getElementById("radioRTL").checked && globalThis.rtlAudioNode) {
+        if (document.getElementById("rtlaudio").checked) {
             globalThis.rtlAudioNode.connect(audioContext.destination)
         } else {
-            try {
-                globalThis.rtlAudioNode.disconnect(audioContext.destination)
-            } catch (err){
-                console.error(err)
-            }
-        }
-    } else {
-        if (globalThis.rtlAudioNode){
             try {
                 globalThis.rtlAudioNode.disconnect(audioContext.destination)
             } catch (err) {
                 console.error(err)
             }
-            
         }
-        
+    } else {
+        if (globalThis.rtlAudioNode) {
+            try {
+                globalThis.rtlAudioNode.disconnect(audioContext.destination)
+            } catch (err) {
+                console.error(err)
+            }
+
+        }
+
     }
 }
 
@@ -219,35 +226,10 @@ globalThis.addFrame = function (data) {
     document.title = "webhorus - " + data['payload_id']
 }
 
-globalThis.addImage = function (data, callsign, id) {
-    let card_div = document.getElementById(callsign+"-"+id)
-    if (card_div == null){
-        const frames_div = document.getElementById("frames")
-        const card = document.createElement("div")
-        card.id = callsign+"-"+id
-        card.classList = "card text-dark bg-light me-3"
-        const cardTitle = document.createElement("div")
-        cardTitle.classList = "card-header h6"
-        cardTitle.innerText = "[" + id + "] " + callsign
-        card.appendChild(cardTitle)
-        const cardBody = document.createElement("div")
-        cardBody.classList = "card-body"
-        card.appendChild(cardBody)
-        const img = document.createElement("img")
-        img.src = URL.createObjectURL((new Blob([data.toJs().buffer],{"type":"image/jpeg"})))
-        cardBody.appendChild(img)
-        frames_div.prepend(card)
-    } else {
-        card_div.getElementsByClassName("card-body")[0].getElementsByTagName("img")[0].src = URL.createObjectURL((new Blob([data.toJs().buffer],{"type":"image/jpeg"})))
-    }
-    document.title = "webhorus - " + callsign
-}
 
-globalThis.addText = function (data) {
-    log_entry(data, "info")
-}
 
-function updateMarker(data) {
+
+globalThis.updateMarker = function (data) {
     const position = L.latLng(data.latitude, data.longitude)
     // create marker if not exists, otherwise update
     if (data.payload_id in markers) {
@@ -266,7 +248,6 @@ function updateMarker(data) {
     }
 
     globalThis.trackMap.panTo(position);
-    log_entry(`Track map updated`, "light")
 }
 
 globalThis.rx_packet = function (packet, sh_format, stats) {
@@ -279,9 +260,9 @@ globalThis.rx_packet = function (packet, sh_format, stats) {
 
     var final_freq
 
-    if (document.getElementById("radioRTL").checked){
+    if (document.getElementById("radioRTL").checked) {
         final_freq = globalThis.Radio.getFrequency() + freq_mean
-    }else {
+    } else {
         if (document.getElementById("dial").value) {
             var dial_freq = parseFloat(document.getElementById("dial").value)
             if (!isNaN(dial_freq)) {
@@ -356,7 +337,7 @@ globalThis.rx_packet = function (packet, sh_format, stats) {
         log_entry(`No SondeHub format so not posting.`, "light")
     }
     globalThis.addFrame(packet.toJs())
-    updateMarker(packet.toJs())
+    globalThis.updateMarker(packet.toJs())
     updatePlots(packet.toJs())
 }
 
@@ -392,6 +373,8 @@ function updatePlots(data) {
     globalThis.Plotly.extendTraces('plots', { y: plot_data, x: [...Array(plot_data.length)].map(() => [plot_time]) }, axis_ids, 256)
 }
 
+
+
 globalThis.Plotly.newPlot('snr', [{
     y: [],
     x: [],
@@ -426,7 +409,7 @@ globalThis.Plotly.newPlot('snr', [{
     }
 }, { responsive: true, staticPlot: true });
 
-var spectrum_layout = {
+globalThis.spectrum_layout = {
     autosize: true,
     margin: {
         l: 20,
@@ -436,7 +419,7 @@ var spectrum_layout = {
         pad: 0
     },
     title: {
-        text: 'Audio Spectrum (dB)',
+        text: 'Spectrum (dB)',
         font: {
             size: "12"
         },
@@ -444,17 +427,12 @@ var spectrum_layout = {
         yanchor: "top",
     },
     yaxis: {
-        type: 'log',
-        //autorange: "reversed",
-        // tickprefix: "-",
+        //  type: 'log',
         tickfont: {
             size: "9"
         },
-        // autorangeoptions: {
-        //     include: [60, 150],
-        //     clipmax: 150,
-        //     clipmin: 0.1
-        // }
+        autorangeoptions: {
+        }
     }
 
 }
@@ -462,7 +440,7 @@ globalThis.Plotly.newPlot('spectrum', [{
     y: [],
     x: [],
     mode: 'lines'
-}], spectrum_layout, { responsive: true, staticPlot: false });
+}], globalThis.spectrum_layout, { responsive: true, staticPlot: true });
 
 globalThis.Plotly.newPlot('plots', [], {
     autosize: true,
@@ -486,9 +464,9 @@ globalThis.updateStats = function (stats) {
     const freq_mean = freq_est.reduce((a, b) => a + b, 0) / freq_est.length
 
     // update spectrum annotations
-    spectrum_layout.annotations = freq_est.map((x) => {
-        if (document.getElementById("radioRTL").checked){
-            x = rtl_offset+x
+    globalThis.spectrum_layout.annotations = freq_est.map((x) => {
+        if (document.getElementById("radioRTL").checked) {
+            x = rtl_offset + x
         }
         return {
             x: x,
@@ -504,17 +482,17 @@ globalThis.updateStats = function (stats) {
         }
     })
 
-    if (document.getElementById("radioRTL").checked){
-        spectrum_layout.shapes = [
+    if (document.getElementById("radioRTL").checked) {
+        globalThis.spectrum_layout.shapes = [
             {
                 type: 'rect',
                 // x-reference is assigned to the x-values
                 xref: 'x',
                 // y-reference is assigned to the plot paper [0,1]
                 yref: 'paper',
-                x0: rtl_freq_est_lower+rtl_offset,
+                x0: rtl_freq_est_lower + rtl_offset,
                 y0: 0,
-                x1: rtl_freq_est_upper+rtl_offset,
+                x1: rtl_freq_est_upper + rtl_offset,
                 y1: 1,
                 fillcolor: '#d3d3d3',
                 opacity: 0.2,
@@ -524,7 +502,7 @@ globalThis.updateStats = function (stats) {
             }
         ]
     } else {
-        spectrum_layout.shapes = []
+        globalThis.spectrum_layout.shapes = []
     }
 
     globalThis.Plotly.extendTraces('snr', {
@@ -546,7 +524,7 @@ var VERSION
 
 async function init_python() {
     log_entry("Starting python load", "light")
-    
+
 
     await Promise.all([
         globalThis.pyodide.loadPackage("./assets/cffi-1.17.1-cp312-cp312-pyodide_2024_0_wasm32.whl"),
@@ -570,12 +548,11 @@ async function init_python() {
     globalThis.fix_datetime = globalThis.pyodide.runPython("fix_datetime")
     globalThis.update_tone_spacing = globalThis.pyodide.runPython("update_tone_spacing")
     globalThis.start_modem = globalThis.pyodide.runPython("start_modem")
-    globalThis.wenet = globalThis.pyodide.runPython("wenet")
-    globalThis.write_wenet = pyodide.runPython("write_wenet")
+
     document.getElementById("audio_start").removeAttribute("disabled");
     document.getElementById("audio_start").innerText = "Start"
-    VERSION = pyodide.runPython("VERSION")
-    log_entry(`webhorus ready. version: ${VERSION}`, "light")
+    globalThis.VERSION = pyodide.runPython("VERSION")
+    log_entry(`webhorus ready. version: ${globalThis.VERSION}`, "light")
 }
 
 
@@ -620,6 +597,7 @@ var horusNode
 var activeAnalyser
 
 globalThis.updateRadio = function () {
+    stop_wenet()
     const audio = document.getElementById("radioAudio").checked
     if (audio) {
         document.getElementById("audioSection").classList.remove("d-none")
@@ -639,16 +617,22 @@ globalThis.updateRadio = function () {
         globalThis.rtlAudioNode.disconnect()
         globalThis.rtlAudioNode.port.onmessage = undefined
     }
-    if (globalThis.Radio){
+    if (globalThis.Radio) {
         globalThis.Radio.stop()
     }
-    if (VERSION) { // only reset the start button if python has been loaded
+    if (globalThis.VERSION) { // only reset the start button if python has been loaded
         document.getElementById("audio_start").removeAttribute("disabled");
         document.getElementById("audio_start").classList.remove("btn-outline-success")
         document.getElementById("audio_start").innerText = "Start"
         document.getElementById("dbfs").classList = "progress-bar"
         document.getElementById("dbfs").style.width = "0%"
         document.getElementById("dbfstext").innerText = "-999 dBFS"
+    }
+
+    if (document.getElementById("radioWenet").checked){
+        document.getElementById("rtlaudio").setAttribute("disabled", "disabled")
+    } else {
+        document.getElementById("rtlaudio").removeAttribute("disabled")
     }
 
     if (audio && document.getElementById("sound_adapter").value != 'placeholder') {
@@ -658,22 +642,24 @@ globalThis.updateRadio = function () {
     globalThis.rtlaudio()
 }
 
-function updatedbfs(dBFS){
-    var percent = (1 - (dBFS / -120)) * 100 // I don't even know. just trying to represent the level
+globalThis.updatedbfs = function (dBFS) {
+    if (document.getElementById("audio_start").innerText == "Running"){ // hack to only update the dbfs if we are in running mode
+        var percent = (1 - (dBFS / -120)) * 100 // I don't even know. just trying to represent the level
 
-    if (!isFinite(percent)) {
-        percent = 0;
-    }
-    document.getElementById("dbfs").style.width = percent.toFixed(2) + "%"
-    document.getElementById("dbfstext").innerText = dBFS.toFixed(2) + " dBFS"
-    if (dBFS > -5) {
-        document.getElementById("dbfs").classList = "progress-bar bg-danger"
-    } else if (dBFS < -90) {
-        document.getElementById("dbfs").classList = "progress-bar bg-danger"
-    } else if (dBFS < -50) {
-        document.getElementById("dbfs").classList = "progress-bar bg-warning"
-    } else {
-        document.getElementById("dbfs").classList = "progress-bar bg-success"
+        if (!isFinite(percent)) {
+            percent = 0;
+        }
+        document.getElementById("dbfs").style.width = percent.toFixed(2) + "%"
+        document.getElementById("dbfstext").innerText = dBFS.toFixed(2) + " dBFS"
+        if (dBFS > -5) {
+            document.getElementById("dbfs").classList = "progress-bar bg-danger"
+        } else if (dBFS < -90) {
+            document.getElementById("dbfs").classList = "progress-bar bg-danger"
+        } else if (dBFS < -50) {
+            document.getElementById("dbfs").classList = "progress-bar bg-warning"
+        } else {
+            document.getElementById("dbfs").classList = "progress-bar bg-success"
+        }
     }
 }
 
@@ -684,8 +670,8 @@ globalThis.updateGain = function () {
     } else {
         document.getElementById("gaindb").value = `${gain} dB`
     }
-    if (globalThis.Radio){
-        if (gain == -0.5){
+    if (globalThis.Radio) {
+        if (gain == -0.5) {
             globalThis.Radio.setGain(null)
             log_entry(`Setting RTL Gain: agc`, "light")
         } else {
@@ -695,20 +681,32 @@ globalThis.updateGain = function () {
     }
 }
 
-globalThis.rtlFreq = function (){
+globalThis.updateBiasT = function () {
+    if (globalThis.Radio) {
+        if (document.getElementById("rtlbiast").checked){
+            globalThis.Radio.enableBiasTee(true);
+            log_entry("Bias T enabled", "light")
+        } else {
+            globalThis.Radio.enableBiasTee(false);
+            log_entry("Bias T disabled", "light")
+        }
+    }
+}
+
+globalThis.rtlFreq = function () {
     const rtl_freq = parseFloat(document.getElementById("rtl_freq").value) * 1000000
-    if (globalThis.Radio){
+    if (globalThis.Radio) {
         globalThis.Radio.setFrequency(rtl_freq)
         log_entry(`Setting RTL Freq: ${rtl_freq}`, "light")
     }
 }
 
 globalThis.startAudio = async function (constraint) {
-
-    if (document.getElementById("about-tab").classList.contains("active")){
+    document.getElementById("wenet_latency").innerText = ""
+    if (document.getElementById("about-tab").classList.contains("active")) {
         document.getElementById("frames-tab").click() // simulate clicking on the receive tab since most users will want to see that when starting the modem
     }
-    
+
     log_entry(`Starting audio`, "light")
     if (!(globalThis.audioContext)) {
         globalThis.audioContext = new AudioContext();
@@ -727,7 +725,7 @@ globalThis.startAudio = async function (constraint) {
     }
 
     if (document.getElementById("radioAudio").checked) {
-
+        stop_wenet()
 
         console.log("audio is starting up ...");
 
@@ -772,33 +770,35 @@ globalThis.startAudio = async function (constraint) {
                 start_microphone(stream);
             }
         })
+    } else if (document.getElementById("radioWenet").checked){
+        start_wenet()
     } else {
         start_rtl()
     }
 
 
     function start_rtl() {
+        stop_wenet()
+        document.getElementById("wenet_latency").innerText = ""
 
         globalThis.rtlAudioNode = new AudioWorkletNode(globalThis.audioContext, 'rtlnode', { "numberOfInputs": 0, "numberOfOutputs": 1 })
         globalThis.rtlAudioNode.port.onmessage = (event) => {
             if (event.data) {
                 globalThis.audioContext.resume()
             } else {
-                if (document.getElementById("radioRTL").checked){
+                if (document.getElementById("radioRTL").checked) {
                     globalThis.audioContext.suspend()
                 }
-                
+
             }
         }
-        
-        
 
         class rtlReceiver {
             constructor() {
                 this.started = false
             }
             play(left, right) {
-                if (this.started == false){
+                if (this.started == false) {
                     document.getElementById("audio_start").setAttribute("disabled", "disabled");
                     document.getElementById("audio_start").classList.add("btn-outline-success")
                     document.getElementById("audio_start").innerText = "Running"
@@ -809,155 +809,108 @@ globalThis.startAudio = async function (constraint) {
         }
 
         class dbfsCalc {
-            constructor() {}
+            constructor() { }
             setSampleRate(rate) {
 
             }
-            receiveSamples(I,Q,frequency){
-                var max = Math.max(...(I.map(x=>Math.abs(x))),...(Q.map(x=>Math.abs(x))))
+            receiveSamples(I, Q, frequency) {
+                var max = Math.max(...(I.map(x => Math.abs(x))), ...(Q.map(x => Math.abs(x))))
                 var dBFS = 20 * Math.log10(max);
-                updatedbfs(dBFS)
-            }
-            andThen(next){
-                return concatenateReceivers(this, next)
+                globalThis.updatedbfs(dBFS)
             }
         }
 
-        class wenet {
-            constructor() {
-                this.buffer = []
-                this.counter = 0
-                this.resampler = new ComplexDownsampler(rtl_sdr_rate,921416,1)
-            }
-            setSampleRate(rate) {
-            }
-            receiveSamples(I,Q,frequency){
-                //const out_resample = this.resampler.downsample(I,Q)
-                // var _I = out_resample[0]
-                // var _Q = out_resample[1]
-                var _I = I;
-                var _Q = Q;
-                for (var x=0;x<_I.length;x++){
-                    this.buffer.push(_I[x]);
-                    this.buffer.push(_Q[x]);
-                }
-                while (this.buffer.length > globalThis.wenet.nin * 2){
-                    var to_modem = this.buffer.splice(0,globalThis.wenet.nin *2)
+        globalThis.rtl = new rtlReceiver()
+        rtl.sampleRate = globalThis.audioContext.sampleRate
 
-                    globalThis.write_wenet(to_modem)
-                    
-                }
+        globalThis.usbDemod = new Demodulator(rtl_sdr_rate)
+        globalThis.usbDemod.setMode({
+            scheme: "USB",
+            bandwidth: ssb_bandwidth * 2,
+            squelch: 0
+        })
 
-                globalThis.Plotly.extendTraces('snr', {
-                    y: [[globalThis.wenet.wenet.stats.snr_est]],
-                    x: [[new Date().toISOString()]]
-                }, [0], 256)
-
-                var fft = globalThis.pyodide.runPython("list(wenet.wenet.fsk.fft_est[0:wenet.wenet.fsk.Ndft//2])").toJs()
-                const spectrum_data = {
-                    y: [fft], // todo fix scale
-                    x: [[...Array(fft.length).keys()].map(x => ((x*(rtl_sdr_rate/2/fft.length))+(globalThis.Radio.getFrequency()-rtl_sdr_rate))/1000/1000)]
-                };
-                globalThis.Plotly.update('spectrum',
-                    spectrum_data,
-                    spectrum_layout
-                )
-            }
-            andThen(next){
-                return concatenateReceivers(this, next)
-            }
-           
-        }
-
-        // globalThis.rtl = new rtlReceiver()
-        // rtl.sampleRate = globalThis.audioContext.sampleRate
-
-        // globalThis.usbDemod = new Demodulator(rtl_sdr_rate)
-        // globalThis.usbDemod.setMode({
-        //     scheme: "USB",
-        //     bandwidth: ssb_bandwidth * 2,
-        //     squelch: 0
-        // })
-
-        // globalThis.usbDemod.player = globalThis.rtl
+        globalThis.usbDemod.player = globalThis.rtl
 
         globalThis.Radio = new Radio(
             new RTL2832U_Provider(),
-            (new wenet()),
+            globalThis.usbDemod.andThen(new dbfsCalc()),
             rtl_sdr_rate, // sample rate
         )
+        globalThis.Radio.setSampleRate(rtl_sdr_rate)
         globalThis.rtlFreq()
         globalThis.updateGain()
 
         globalThis.Radio.start()
-        //globalThis.nin = globalThis.start_modem(globalThis.audioContext.sampleRate, false, rtl_freq_est_lower, rtl_freq_est_upper)
-
-       
-        // horusNode = new AudioWorkletNode(globalThis.audioContext, 'horus', {
-        //     processorOptions: {
-        //         nin: globalThis.nin
-        //     }
-        // });
+        globalThis.nin = globalThis.start_modem(globalThis.audioContext.sampleRate, false, rtl_freq_est_lower, rtl_freq_est_upper)
 
 
-
-        // globalThis.rtlAudioNode.connect(horusNode);
-
-        // horusNode.port.onmessage = (e) => {
-        //     on_audio(e.data)
-        // }
-        // globalThis.audioContext.resume()
-
-        // // setup spectogram
-        // activeAnalyser = globalThis.audioContext.createAnalyser();
-        // activeAnalyser.chan
-        // activeAnalyser.fftSize = fftSize;
-        // activeAnalyser.smoothingTimeConstant = 0.25;
-        // globalThis.rtlAudioNode.connect(activeAnalyser);
+        horusNode = new AudioWorkletNode(globalThis.audioContext, 'horus', {
+            processorOptions: {
+                nin: globalThis.nin
+            }
+        });
 
 
 
-        // if (activeAnalyser) {
-        //     let analyser = activeAnalyser;
-        //     const maxdB = analyser.maxDecibels;
-        //     const mindB = analyser.minDecibels;
-        //     globalThis.bufferLength = analyser.frequencyBinCount;
-        //     const step = (globalThis.audioContext.sampleRate / 2) / globalThis.bufferLength
-        //     const x_values = [...Array(globalThis.bufferLength).keys()].map((x) => (x + 1) * step)
+        globalThis.rtlAudioNode.connect(horusNode);
 
-        //     // get closest index to x hz to limit plot size
-        //     globalThis.max_index = x_values.reduce((prev, curr, index) => { if (curr < ssb_bandwidth) { return index } else { return prev } }, 0)
-        //     globalThis.filtered_x_values = x_values.slice(0, globalThis.max_index).map((x)=>rtl_offset+x)
+        horusNode.port.onmessage = (e) => {
+            on_audio(e.data)
+        }
+        globalThis.audioContext.resume()
 
-        //     if (globalThis.analyserUpdate) {
-        //         clearInterval(globalThis.analyserUpdate)
-        //     }
-        //     globalThis.analyserUpdate = setInterval(() => {
-        //         const freqData = new Float32Array(globalThis.bufferLength);
-        //         analyser.getFloatFrequencyData(freqData);
-        //         const spectrum_data = {
-        //             y: [freqData.slice(0, globalThis.max_index).map((x) => Math.max(Math.min(150, Math.abs(x)), 0.1))],
-        //             x: [globalThis.filtered_x_values]
-        //         };
-        //         globalThis.Plotly.update('spectrum',
-        //             spectrum_data,
-        //             spectrum_layout)
-        //     }, 200)
-        //     log_entry(`FFT Started`, "light")
+        // setup spectogram
+        activeAnalyser = globalThis.audioContext.createAnalyser();
+        activeAnalyser.chan
+        activeAnalyser.fftSize = fftSize;
+        activeAnalyser.smoothingTimeConstant = 0.25;
+        globalThis.rtlAudioNode.connect(activeAnalyser);
 
 
 
-        // }
+        if (activeAnalyser) {
+            let analyser = activeAnalyser;
+            const maxdB = analyser.maxDecibels;
+            const mindB = analyser.minDecibels;
+            globalThis.bufferLength = analyser.frequencyBinCount;
+            const step = (globalThis.audioContext.sampleRate / 2) / globalThis.bufferLength
+            const x_values = [...Array(globalThis.bufferLength).keys()].map((x) => (x + 1) * step)
 
-       // globalThis.rtlaudio()
+            // get closest index to x hz to limit plot size
+            globalThis.max_index = x_values.reduce((prev, curr, index) => { if (curr < ssb_bandwidth) { return index } else { return prev } }, 0)
+            globalThis.filtered_x_values = x_values.slice(0, globalThis.max_index).map((x) => rtl_offset + x)
+
+            if (globalThis.analyserUpdate) {
+                clearInterval(globalThis.analyserUpdate)
+            }
+            globalThis.analyserUpdate = setInterval(() => {
+                const freqData = new Float32Array(globalThis.bufferLength);
+                analyser.getFloatFrequencyData(freqData);
+                const spectrum_data = {
+                    y: [freqData.slice(0, globalThis.max_index)],
+                    x: [globalThis.filtered_x_values]
+                };
+                globalThis.Plotly.update('spectrum',
+                    spectrum_data,
+                    globalThis.spectrum_layout)
+            }, 200)
+            log_entry(`FFT Started`, "light")
+
+
+
+        }
+
+        globalThis.rtlaudio()
     }
+
 
     function on_audio(audio_buffer) {
 
-       
 
-        // globalThis.nin = write_audio(audio_buffer)
-        // horusNode.port.postMessage(globalThis.nin)
+
+        globalThis.nin = write_audio(audio_buffer)
+        horusNode.port.postMessage(globalThis.nin)
 
 
     }
@@ -1000,7 +953,7 @@ globalThis.startAudio = async function (constraint) {
             var max_audio = Math.max(...e.data)
             // update dbfs meter - and yes I know how silly it is that we are turning these back to floats....
             var dBFS = 20 * Math.log10(max_audio / 32767); // technically we are ignoring half the signal here, but lets assume its not too bias'd
-            updatedbfs(dBFS)
+            globalThis.updatedbfs(dBFS)
         }
         globalThis.audioContext.resume()
 
@@ -1032,12 +985,12 @@ globalThis.startAudio = async function (constraint) {
                 const freqData = new Float32Array(globalThis.bufferLength);
                 analyser.getFloatFrequencyData(freqData);
                 const spectrum_data = {
-                    y: [freqData.slice(0, globalThis.max_index).map((x) => Math.max(Math.min(150, Math.abs(x)), 0.1))],
+                    y: [freqData.slice(0, globalThis.max_index)],
                     x: [globalThis.filtered_x_values]
                 };
                 globalThis.Plotly.update('spectrum',
                     spectrum_data,
-                    spectrum_layout)
+                    globalThis.spectrum_layout)
             }, 200)
             log_entry(`FFT Started`, "light")
 
@@ -1065,7 +1018,7 @@ function report_position() {
 
         const listener_body = {
             "software_name": "webhorus",
-            "software_version": VERSION + " " + navigator.userAgent,
+            "software_version": globalThis.VERSION + " " + navigator.userAgent,
             "uploader_callsign": document.getElementById("callsign").value,
             "uploader_position": pos,
             "uploader_radio": document.getElementById("uploader_radio").value,
@@ -1089,13 +1042,16 @@ function report_position() {
     }
 }
 
-function log_entry(message, level) {
+globalThis.log_entry = function (message, level) {
     console.log(message)
     const rx_log = document.getElementById("rx_log");
     var log_entry = document.createElement("div");
-    log_entry.innerText = message
+    const _date = document.createElement("strong")
+    _date.innerText = `${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`
+    log_entry.innerText = " " + message
     log_entry.classList.add("alert-" + level)
     log_entry.classList.add("alert")
+    log_entry.prepend(_date)
     rx_log.prepend(log_entry)
 }
 
@@ -1107,11 +1063,30 @@ setInterval(() => {
 }, 150)
 
 
-if (navigator.usb){
+globalThis.toggleBigImage = function (img) {
+    if (this.parentNode.classList.contains("card-large-image")) {
+        this.parentNode.classList.remove("card-large-image")
+    } else {
+        this.parentNode.classList.add("card-large-image")
+    }
+}
+
+if (navigator.usb) {
     document.getElementById("radioRTL").removeAttribute("disabled")
+    document.getElementById("radioWenet").removeAttribute("disabled")
+}
+
+// set defaults for wenet domain
+if (window.location.hostname == "wenet.sondehub.org" || window.location.hostname == "localhost"){
+    document.getElementById("radioWenet").click()
+    document.getElementById("rtl_freq").value = "443.5"
+    document.getElementById("webtitle").textContent = "webwenet"
+    document.title = "webwenet"
+
 }
 
 globalThis.loadSettings();
+settings_loaded = true
 globalThis.pyodide = await loadPyodide();
 
 loadMapPicker()

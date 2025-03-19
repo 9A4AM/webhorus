@@ -5199,6 +5199,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"vite-plugin-prebundle-workers@npm:^0.2.0":
+  version: 0.2.0
+  resolution: "vite-plugin-prebundle-workers@npm:0.2.0"
+  checksum: 10c0/22e5e0fe17c5a2fb29408cd6b89c6427918bae9fdbb5f9a68b15eeceee4b8737523f8a451984ec15b09fd632020b9da07cbda5b1531aac814fbf25da4dca51b6
+  languageName: node
+  linkType: hard
+
 "vite-plugin-pwa@npm:^0.21.1":
   version: 0.21.1
   resolution: "vite-plugin-pwa@npm:0.21.1"
@@ -5235,9 +5242,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite@npm:^6.2.0":
-  version: 6.2.1
-  resolution: "vite@npm:6.2.1"
+"vite@npm:^6.2.2":
+  version: 6.2.2
+  resolution: "vite@npm:6.2.2"
   dependencies:
     esbuild: "npm:^0.25.0"
     fsevents: "npm:~2.3.3"
@@ -5283,7 +5290,7 @@ __metadata:
       optional: true
   bin:
     vite: bin/vite.js
-  checksum: 10c0/2c024376a840eae2ce9cfba98d62e9f1eae93caa8304875854dbc0740414aedcfbe157c2244567bd456cdb60a300312af02ae9b5c63c147d35cf4da3a0591312
+  checksum: 10c0/52f5b1c10cfe5e3b6382c6de1811ebbf76df9b5a8bab3d65169446c6b54a5f1528f775b1548009a6d8aad11def20fba046bb3e9abb10c0c2c9ccd78118623bb8
   languageName: node
   linkType: hard
 
@@ -5299,7 +5306,8 @@ __metadata:
     radioreceiver: "https://github.com/jtarrio/radioreceiver.git"
     rollup-plugin-copy: "npm:^3.5.0"
     sass-embedded: "npm:^1.85.1"
-    vite: "npm:^6.2.0"
+    vite: "npm:^6.2.2"
+    vite-plugin-prebundle-workers: "npm:^0.2.0"
     vite-plugin-pwa: "npm:^0.21.1"
     vite-plugin-static-copy: "npm:^2.3.0"
   languageName: unknown

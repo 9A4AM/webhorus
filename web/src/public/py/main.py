@@ -1,10 +1,9 @@
 import struct
 from pyodide.ffi import to_js
 from pyodide.ffi import create_proxy
-from js import document, rx_packet, updateStats, navigator, addImage, addText
+from js import document, rx_packet, updateStats, navigator
 import datetime
 from webhorus import demod
-from pywenet.wenet import Wenet
 from horusdemodlib.decoder import decode_packet
 from horusdemodlib.utils import telem_to_sondehub, fix_datetime
 
@@ -17,27 +16,6 @@ VERSION = "0.0.9"
 # horus_demod = demod.Demod(tone_spacing=int(document.getElementById("tone_spacing").value))
 
 buffer = b''
-
-
-def wenet_gps(gps):
-    print("-----")
-    print(gps)
-
-
-def write_wenet(audio):
-    data = audio.to_py(depth=1)
-    data = struct.pack(('f'*len(data)), *data)     
-    wenet.write(data)
-
-
-wenet = Wenet(
-    samplerate=921416,
-    partialupdate=1000,
-    callback_ssdv_image=addImage,
-    callback_gps=wenet_gps,
-    callback_log=addText
-    )
-
 
 def start_modem(sample_rate, stereo_iq=False, freq_est_lower=100, freq_est_upper=4000):
     global horus_demod

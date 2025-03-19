@@ -18,20 +18,13 @@ def gps(data):
     print(data)
 
 wenet = Wenet(
-    partialupdate=50,
-    callback_ssdv_image=show_image,
-    callback_gps=gps
+    partialupdate=50
     )
 
-with open("/Users/mwheeler/Downloads/wenet_sample_fs921416Hz_offset.f32","rb") as f:
+with open("/Users/mwheeler/Downloads/wenet_921416_threshold_decode.f32","rb") as f:
     while data := f.read(wenet.nin*2*4):
-        wenet.write(data)
+        output = wenet.write(data)
+        if output:
+            print(data)
         
-       
-# todo
-# - wenet into only class
-# - parsing telm for sondehub
-# - partial image decodes
-# - handling log messages
-# - probably ignore no valid packet found message
-# - move main to a module so that can either test or call
+
