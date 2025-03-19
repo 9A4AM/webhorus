@@ -1064,11 +1064,20 @@ setInterval(() => {
 
 
 globalThis.toggleBigImage = function (img) {
-    if (this.parentNode.classList.contains("card-large-image")) {
-        this.parentNode.classList.remove("card-large-image")
+    if (this.tagName == "IMG"){
+        if (this.parentNode.classList.contains("card-large-image")) {
+            this.parentNode.classList.remove("card-large-image")
+        } else {
+            this.parentNode.classList.add("card-large-image")
+        }
     } else {
-        this.parentNode.classList.add("card-large-image")
+        if (this.classList.contains("card-large-image")) {
+            this.classList.remove("card-large-image")
+        } else {
+            this.classList.add("card-large-image")
+        }
     }
+   
 }
 
 if (navigator.usb) {

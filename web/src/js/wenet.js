@@ -123,10 +123,9 @@ function addImage(data, callsign, id) {
         card.appendChild(cardTitle)
         const cardBody = document.createElement("div")
         cardBody.classList = "card-body"
-
+        cardBody.addEventListener("click", globalThis.toggleBigImage, false)
         card.appendChild(cardBody)
         const img = document.createElement("img")
-        img.addEventListener("click", globalThis.toggleBigImage, false)
         img.src = "data:image/jpeg;base64," + btoa(data.reduce((data, byte) => data + String.fromCharCode(byte), ''));
         cardBody.appendChild(img)
 
