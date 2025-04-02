@@ -2,12 +2,12 @@
   "name": "web",
   "packageManager": "yarn@4.7.0",
   "dependencies": {
+    "@jtarrio/webrtlsdr": "^0.1.0",
     "@popperjs/core": "^2.11.8",
     "bootstrap": "^5.3.3",
     "leaflet": "^1.9.4",
     "plotly.js-dist-min": "^3.0.1",
     "pyodide": "^0.27.3",
-    "radioreceiver": "https://github.com/jtarrio/radioreceiver.git",
     "rollup-plugin-copy": "^3.5.0",
     "vite": "^6.2.2",
     "vite-plugin-prebundle-workers": "^0.2.0",

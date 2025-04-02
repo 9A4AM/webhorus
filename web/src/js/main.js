@@ -9,11 +9,11 @@ import * as Plotly from "plotly.js-dist-min";
 
 import "leaflet";
 
-import { Radio } from "radioreceiver/src/radio/radio";
-import { RTL2832U_Provider } from "radioreceiver/src/rtlsdr/rtl2832u";
-import { Demodulator } from "radioreceiver/src/demod/demodulator";
-import { ComplexDownsampler } from "radioreceiver/src/dsp/resamplers";
-import { concatenateReceivers } from "radioreceiver/src/radio/sample_receiver"
+import { Radio } from "@jtarrio/webrtlsdr/radio/radio";
+import { RTL2832U_Provider } from "@jtarrio/webrtlsdr/rtlsdr/rtl2832u";
+import { Demodulator } from "@jtarrio/webrtlsdr/demod/demodulator";
+import { ComplexDownsampler } from "@jtarrio/webrtlsdr/dsp/resamplers";
+import { concatenateReceivers } from "@jtarrio/webrtlsdr/radio/sample_receiver"
 
 import { start_wenet, stop_wenet } from "./wenet"
 
