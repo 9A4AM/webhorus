@@ -92,12 +92,12 @@ export default defineConfig({
                 registerType: 'autoUpdate',
                 injectRegister: 'auto',
                 devOptions: {
-                    enabled: false,
+                    enabled: true,
                     type: 'module',
                 },
                 workbox: {
                     globPatterns: ["**/*.{js,css,html,png,whl,wasm,zip,py,ico,svg,json}"],
-                    globIgnores: ["sw.js","workbox-*.js","assets/*.whl"],
+                    globIgnores: ["sw.js","workbox-*.js"],
                     maximumFileSizeToCacheInBytes: 20 * 1024 * 1024,
                     runtimeCaching: [
                         {
