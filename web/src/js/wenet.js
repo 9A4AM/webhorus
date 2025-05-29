@@ -163,6 +163,8 @@ function start_wenet() {
     if (globalThis.analyserUpdate){
         clearInterval(globalThis.analyserUpdate)
     }
+
+    document.getElementById("alert").textContent = ""
     
 
 
@@ -213,8 +215,10 @@ function start_wenet() {
             document.getElementById("wenet_latency").innerText = latency + " ms"
             if (latency > 1000) {
                 document.getElementById("wenet_latency").style.color = "red"
+                document.getElementById("alert").textContent = "Can't keep up; Dropping samples"
             } else {
                 document.getElementById("wenet_latency").style.color = "black"
+                document.getElementById("alert").textContent = ""
             }
 
             if (event.data.time.getTime() == last_sent.getTime()) {
@@ -326,6 +330,7 @@ function start_wenet() {
 
     rtlFreq()
     updateGain()
+    updatePPM()
     updateBiasT()
 
     rtl.start()
@@ -348,6 +353,15 @@ document.getElementById("rtlbiast").addEventListener("change",()=>{
     updateBiasT()
 })
 
+
+function updatePPM() {
+    const ppm = parseFloat(document.getElementById("ppm").value)
+    if (rtl) {
+            rtl.setFrequencyCorrection(ppm)
+            log_entry(`Setting RTL PPM: ` + ppm, "light")
+    }
+}
+
 function updateGain() {
     const gain = parseFloat(document.getElementById("gain").value)
     if (gain == -0.5) {
@@ -367,6 +381,9 @@ function updateGain() {
 }
 document.getElementById("gain").addEventListener("change",()=>{
     updateGain()
+})
+document.getElementById("ppm").addEventListener("change",()=>{
+    updatePPM()
 })
 
 function rtlFreq() {

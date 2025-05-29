@@ -111,6 +111,7 @@ globalThis.saveSettings = function () {
         localStorage.setItem("tone_spacing", document.getElementById("tone_spacing").value)
         localStorage.setItem("rtl_freq", document.getElementById("rtl_freq").value)
         localStorage.setItem("gain", document.getElementById("gain").value)
+        localStorage.setItem("ppm", document.getElementById("ppm").value)
         localStorage.setItem("radio", document.querySelector('input[name="radioType"]:checked').value)
         localStorage.setItem("rtlaudio", document.getElementById("rtlaudio").checked)
         log_entry(`Saved settings`, "light")
@@ -131,6 +132,7 @@ globalThis.loadSettings = function () {
     if (localStorage.getItem("tone_spacing")) { document.getElementById("tone_spacing").value = localStorage.getItem("tone_spacing") }
     if (localStorage.getItem("rtl_freq")) { document.getElementById("rtl_freq").value = localStorage.getItem("rtl_freq") }
     if (localStorage.getItem("gain")) { document.getElementById("gain").value = localStorage.getItem("gain") }
+    if (localStorage.getItem("ppm")) { document.getElementById("gain").value = localStorage.getItem("ppm") }
     if (localStorage.getItem("rtlaudio")) { document.getElementById("rtlaudio").checked = (localStorage.getItem("rtlaudio") == 'true') }
     if (localStorage.getItem("rtlbiast")) { document.getElementById("rtlbiast").checked = (localStorage.getItem("rtlbiast") == 'true') }
 
@@ -142,6 +144,7 @@ globalThis.loadSettings = function () {
 
     globalThis.updateRadio()
     globalThis.updateGain()
+    globalThis.updatePPM()
     globalThis.rtlaudio()
     globalThis.updateBiasT()
 
@@ -663,6 +666,14 @@ globalThis.updatedbfs = function (dBFS) {
     }
 }
 
+globalThis.updatePPM = function () {
+    const ppm = parseFloat(document.getElementById("ppm").value)
+    if (globalThis.Radio) {
+            globalThis.Radio.setFrequencyCorrection(ppm)
+            log_entry(`Setting RTL PPM: ` + ppm, "light")
+    }
+}
+
 globalThis.updateGain = function () {
     const gain = parseFloat(document.getElementById("gain").value)
     if (gain == -0.5) {
@@ -780,6 +791,7 @@ globalThis.startAudio = async function (constraint) {
     function start_rtl() {
         stop_wenet()
         document.getElementById("wenet_latency").innerText = ""
+        document.getElementById("alert").textContent = ""
 
         globalThis.rtlAudioNode = new AudioWorkletNode(globalThis.audioContext, 'rtlnode', { "numberOfInputs": 0, "numberOfOutputs": 1 })
         globalThis.rtlAudioNode.port.onmessage = (event) => {
@@ -840,6 +852,7 @@ globalThis.startAudio = async function (constraint) {
         globalThis.Radio.setSampleRate(rtl_sdr_rate)
         globalThis.rtlFreq()
         globalThis.updateGain()
+        globalThis.updatePPM();
 
         globalThis.Radio.start()
         globalThis.nin = globalThis.start_modem(globalThis.audioContext.sampleRate, false, rtl_freq_est_lower, rtl_freq_est_upper)

@@ -71,6 +71,7 @@
                 </div>
             </div>
             <div class="row w-90 pt-2">
+                <span id="alert"></span>
                 <div class="progress position-relative ms-auto me-auto col-11 ps-0 pe-0">
                     <div id="dbfs" class="progress-bar" role="progressbar" style="width: 0%;">
                         <span id="dbfstext" class="justify-content-center d-flex position-absolute w-100">-999
@@ -84,7 +85,9 @@
 
     <!-- Begin page content -->
     <main role="main" class="container gap-4 d-grid " >
+        
         <div class="tab-content" id="appTabs">
+            <div id="spectrum" class="col-md-12 plotlyhack" ></div>
             <div class="tab-pane show active justify-content-center" id="about-tab-pane" role="tabpanel" tabindex="0">
                 <div class="row mt-3">
                     <div class="col-auto mb-2">
@@ -309,14 +312,21 @@
                                     <div class="col mb-2">
                                         <label class="form-label col-form-label" for="dial">RTL Frequency
                                             (MHz)</label>
-                                        <input class="form-control" id="rtl_freq" placeholder=""
+                                        <input class="form-control" step="0.001" id="rtl_freq" placeholder=""
                                             onchange="saveSettings();rtlFreq();" type="number" inputmode="decimal" value="434.199">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="col mb-2">
+                                        <label class="form-label col-form-label" for="dial">RTL PPM frequency correction</label>
+                                        <input class="form-control" id="ppm" step="1" placeholder=""
+                                            onchange="saveSettings();updatePPM();" type="number" inputmode="decimal" value="0">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="col mb-2">
                                         <label class="form-label col-form-label" for="dial">RTL Gain
-                                            (MHz)</label>
+                                            (db)</label>
                                         <div class="row">
                                             <input type="range" class="form-range " min="-0.5" max="50" step="0.5" value="-0.5"
                                                 id="gain" oninput="saveSettings(); updateGain();">
@@ -357,8 +367,7 @@
             <div class="tab-pane justify-content-center" id="frames-tab-pane" role="tabpanel" tabindex="0">
 
 
-                <div id="spectrum" class="col-md-12 plotlyhack" >
-                </div>
+                
                 <div id="snr" class="col-md-12 plotlyhack" >
                 </div>
                 <div class="col-md-12" style="position:relative;">

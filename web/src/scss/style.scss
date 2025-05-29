@@ -95,7 +95,8 @@ main {
 }
 
 .plotlyhack {
-    width: 95% !important;
+    width: 99vw !important;
+    overflow: hidden;
     margin: auto;
 }
 
@@ -148,4 +149,30 @@ main {
     width: 100%;
     height: auto;
     margin: auto;
+}
+
+#alert {
+    text-align: center;
+    color: red;
+}
+
+
+#appTabs:has(#map-tab-pane.active) #spectrum{
+    display:none; 
+}
+
+#appTabs:has(#plots-tab-pane.active) #spectrum{
+    display:none; 
+}
+
+#appTabs:has(#about-tab-pane.active) #spectrum{
+    display:none; 
+}
+
+#appTabs:has(#log-tab-pane.active) #spectrum{
+    display:none; 
+}
+
+#appTabs {
+    overflow: hidden;
 }
