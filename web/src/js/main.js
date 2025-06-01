@@ -49,7 +49,7 @@ globalThis.geoload = function () {
 
 
 function loadMapPicker() {
-    mapPickerMap = L.map('location_picker', {}).setView([-37.8136, 144.9631], 6);
+    mapPickerMap = L.map('location_picker', {worldCopyJump: true}).setView([-37.8136, 144.9631], 6);
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
