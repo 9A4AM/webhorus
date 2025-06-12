@@ -279,7 +279,7 @@ globalThis.rx_packet = function (packet, sh_format, stats) {
     if (sh_format) {
         var sh_packet = sh_format.toJs()
         if (final_freq) {
-            sh_packet['frequency'] = final_freq.toFixed(4)
+            sh_packet['frequency'] = final_freq
         }
 
         // Mark will want me to do some peak hold stuff here, but honestly that just seems like too much work.
