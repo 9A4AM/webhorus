@@ -264,7 +264,7 @@ globalThis.rx_packet = function (packet, sh_format, stats) {
     var final_freq
 
     if (document.getElementById("radioRTL").checked) {
-        final_freq = globalThis.Radio.getFrequency() + freq_mean
+        final_freq = (globalThis.Radio.getFrequency() + freq_mean) / 1000000
     } else {
         if (document.getElementById("dial").value) {
             var dial_freq = parseFloat(document.getElementById("dial").value)
@@ -279,7 +279,7 @@ globalThis.rx_packet = function (packet, sh_format, stats) {
     if (sh_format) {
         var sh_packet = sh_format.toJs()
         if (final_freq) {
-            sh_packet['frequency'] = final_freq
+            sh_packet['frequency'] = final_freq.toFixed(4)
         }
 
         // Mark will want me to do some peak hold stuff here, but honestly that just seems like too much work.
