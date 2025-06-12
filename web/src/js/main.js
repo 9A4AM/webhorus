@@ -707,7 +707,7 @@ globalThis.updateBiasT = function () {
 globalThis.rtlFreq = function () {
     const rtl_freq = parseFloat(document.getElementById("rtl_freq").value) * 1000000
     if (globalThis.Radio) {
-        globalThis.Radio.setFrequency(rtl_freq)
+        globalThis.Radio.setFrequency(rtl_freq + rtl_offset)
         log_entry(`Setting RTL Freq: ${rtl_freq}`, "light")
     }
 }
