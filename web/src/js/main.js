@@ -132,7 +132,7 @@ globalThis.loadSettings = function () {
     if (localStorage.getItem("tone_spacing")) { document.getElementById("tone_spacing").value = localStorage.getItem("tone_spacing") }
     if (localStorage.getItem("rtl_freq")) { document.getElementById("rtl_freq").value = localStorage.getItem("rtl_freq") }
     if (localStorage.getItem("gain")) { document.getElementById("gain").value = localStorage.getItem("gain") }
-    if (localStorage.getItem("ppm")) { document.getElementById("gain").value = localStorage.getItem("ppm") }
+    if (localStorage.getItem("ppm")) { document.getElementById("ppm").value = localStorage.getItem("ppm") }
     if (localStorage.getItem("rtlaudio")) { document.getElementById("rtlaudio").checked = (localStorage.getItem("rtlaudio") == 'true') }
     if (localStorage.getItem("rtlbiast")) { document.getElementById("rtlbiast").checked = (localStorage.getItem("rtlbiast") == 'true') }
 
@@ -634,8 +634,10 @@ globalThis.updateRadio = function () {
 
     if (document.getElementById("radioWenet").checked){
         document.getElementById("rtlaudio").setAttribute("disabled", "disabled")
+        document.getElementById("tone_spacing").parentElement.classList.add("d-none")
     } else {
         document.getElementById("rtlaudio").removeAttribute("disabled")
+        document.getElementById("tone_spacing").parentElement.classList.remove("d-none")
     }
 
     if (audio && document.getElementById("sound_adapter").value != 'placeholder') {
