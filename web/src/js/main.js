@@ -635,9 +635,11 @@ globalThis.updateRadio = function () {
     if (document.getElementById("radioWenet").checked){
         document.getElementById("rtlaudio").setAttribute("disabled", "disabled")
         document.getElementById("tone_spacing").parentElement.classList.add("d-none")
+        globalThis.setPageTitle("webwenet")
     } else {
         document.getElementById("rtlaudio").removeAttribute("disabled")
         document.getElementById("tone_spacing").parentElement.classList.remove("d-none")
+        globalThis.setPageTitle("webhorus")
     }
 
     if (audio && document.getElementById("sound_adapter").value != 'placeholder') {
@@ -1095,19 +1097,23 @@ globalThis.toggleBigImage = function (img) {
    
 }
 
+globalThis.setPageTitle = function(title){
+    document.getElementById("webtitle").textContent = title
+    document.title = title
+}
+
 if (navigator.usb) {
     document.getElementById("radioRTL").removeAttribute("disabled")
     document.getElementById("radioWenet").removeAttribute("disabled")
-}
 
-// set defaults for wenet domain
-if (window.location.hostname == "wenet.sondehub.org" || window.location.hostname == "localhost"){
-    document.getElementById("radioWenet").click()
-    document.getElementById("rtl_freq").value = "443.5"
-    document.getElementById("webtitle").textContent = "webwenet"
-    document.title = "webwenet"
+    // set defaults for wenet domain
+    if (window.location.hostname == "wenet.sondehub.org" || window.location.hostname == "localhost"){
+        document.getElementById("radioWenet").click()
+        document.getElementById("rtl_freq").value = "443.5"
+        globalThis.setPageTitle("webwenet")
+    }
+} 
 
-}
 
 globalThis.loadSettings();
 settings_loaded = true
