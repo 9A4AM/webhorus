@@ -11,9 +11,11 @@ import logging
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
 
-VERSION = "0.0.14"
+VERSION = "0.0.15"
 
 # horus_demod = demod.Demod(tone_spacing=int(document.getElementById("tone_spacing").value))
+
+
 
 buffer = b''
 

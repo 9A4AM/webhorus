@@ -543,7 +543,26 @@ async function init_python() {
         globalThis.pyodide.loadPackage("./assets/webhorus-0.1.0-cp312-cp312-pyodide_2024_0_wasm32.whl")
     ]);
     log_entry("Python packages loaded", "light")
+    await globalThis.pyodide.runPythonAsync(`
+        class r_get():
+            def __init__(self,url,timeout):
+                if url not in [PAYLOAD_ID_LIST_URL, HORUS_CUSTOM_FIELD_URL]:
+                    raise ValueError("Not supported requests url")
+                self.url = url
+            @property
+            def text(self):
+                if self.url == PAYLOAD_ID_LIST_URL:
+                    return payload_ids
+                elif self.url == HORUS_CUSTOM_FIELD_URL:
+                    return payload_formats
 
+        import requests
+        requests.get = r_get
+        from horusdemodlib.payloads import PAYLOAD_ID_LIST_URL, HORUS_CUSTOM_FIELD_URL
+        from pyodide.http import pyfetch
+        payload_ids =  await (await pyfetch(PAYLOAD_ID_LIST_URL)).text()
+        payload_formats = await (await pyfetch(HORUS_CUSTOM_FIELD_URL)).text()
+        `)
     globalThis.pyodide.runPython(await (await fetch("/py/main.py")).text());
     log_entry("main.py loaded", "light")
 
@@ -556,7 +575,17 @@ async function init_python() {
     document.getElementById("audio_start").innerText = "Start"
     globalThis.VERSION = pyodide.runPython("VERSION")
     log_entry(`webhorus ready. version: ${globalThis.VERSION}`, "light")
+
+    globalThis.payload_id_updater = setInterval(()=>{
+        globalThis.pyodide.runPythonAsync(`
+            payload_ids =  await (await pyfetch(PAYLOAD_ID_LIST_URL)).text()
+            payload_formats = await (await pyfetch(HORUS_CUSTOM_FIELD_URL)).text()
+        `);
+        }
+    ,1000*60*15)
 }
+
+
 
 
 async function add_constraints(constraint) {
