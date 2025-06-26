@@ -12,8 +12,6 @@ BYTES_PER_PACKET = 256
 CRC_BYTES = 2
 PARITY_BYTES = 65
 
-
-
 def crc16(data):
     calculator = Calculator(Configuration(
         16, 0x1021,0xffff
