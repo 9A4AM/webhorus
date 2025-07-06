@@ -144,7 +144,10 @@ class DRS232_LDPC():
                     
             
             if self.state == DRS232_STATE.COLLECT_PACKET:
-                self.symbol_buf[self.ind] = symbol * scramble_code[self.ind%1000]
+                if self.rs232_framing:
+                    self.symbol_buf[self.ind] = symbol
+                else:
+                    self.symbol_buf[self.ind] = symbol * scramble_code[self.ind%1000]
                 self.ind += 1
 
                 if self.ind == self.symbols_per_packet:
