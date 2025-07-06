@@ -13,6 +13,7 @@ from dataclasses import dataclass
 
 horus_api = _horus_api_cffi.lib
 
+SNR_SAMPLES = 10
 
 
 def stuct_to_dict(data):
@@ -56,6 +57,7 @@ class Demod():
             freq_est_upper=4000
     ):
         self.stereo_iq = stereo_iq
+        self.snr_samples = []
 
         for x in range(8,50):
             if (sample_rate/100)%x == 0: # we are assuming the mode is horus binary at 100 baud
@@ -109,6 +111,10 @@ class Demod():
         mode = horus_api.horus_get_mode(self.hstates)
         return mode
 
+    @property
+    def snr(self):
+        return max(self.snr_samples)
+
     # in case someone wanted to use `with` style. I'm not sure if closing the modem does a lot.
     def __enter__(self):
         return self
@@ -144,6 +150,9 @@ class Demod():
             horus_api.HORUS_MODE_RTTY_8N2,
         ]:
             data_out_bytes = bytes.fromhex(data_out_bytes.decode("ascii"))
+
+        self.snr_samples.append(self.modem_stats['snr_est'])
+        self.snr_samples = self.snr_samples[-SNR_SAMPLES:]
         if valid:
             return Frame(
                 data=data_out_bytes,

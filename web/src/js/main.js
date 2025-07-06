@@ -286,7 +286,7 @@ globalThis.updateMarker = function (data) {
     globalThis.trackMap.panTo(position);
 }
 
-globalThis.rx_packet = function (packet, sh_format, stats) {
+globalThis.rx_packet = function (packet, sh_format, stats, snr) {
     log_entry(JSON.stringify(packet.toJs()), "info")
 
     var freq_est = stats.toJs().f_est
@@ -316,7 +316,7 @@ globalThis.rx_packet = function (packet, sh_format, stats) {
         }
 
         // Mark will want me to do some peak hold stuff here, but honestly that just seems like too much work.
-        sh_packet['snr'] = stats.toJs().snr_est
+        sh_packet['snr'] = snr.toJs()
         log_entry(`Posting telm.`, "light")
         const response = fetch("https://api.v2.sondehub.org/amateur/telemetry", {
             method: "PUT",
@@ -1195,6 +1195,10 @@ if (navigator.usb) {
 
     if (navigator.userAgentData && navigator.userAgentData.platform == "Windows"){
         document.getElementById("wizard_windows_warning").classList.remove("d-none")
+    }
+
+    if (navigator.userAgentData && navigator.userAgentData.platform == "Linux"){
+        document.getElementById("wizard_linux_warning").classList.remove("d-none")
     }
 
     // set defaults for wenet domain
