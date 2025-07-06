@@ -25,6 +25,14 @@ main {
     padding-top: 80px;
 }
 
+#loading {
+    background-color: white !important;
+}
+
+#loading_content {
+    font-size: 40px;
+}
+
 #spectrum,
 #snr {
     height: 150px
