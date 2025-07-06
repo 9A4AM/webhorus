@@ -316,7 +316,7 @@ globalThis.rx_packet = function (packet, sh_format, stats, snr) {
         }
 
         // Mark will want me to do some peak hold stuff here, but honestly that just seems like too much work.
-        sh_packet['snr'] = snr.toJs()
+        sh_packet['snr'] = snr
         log_entry(`Posting telm.`, "light")
         const response = fetch("https://api.v2.sondehub.org/amateur/telemetry", {
             method: "PUT",
