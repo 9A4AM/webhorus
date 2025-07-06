@@ -368,22 +368,23 @@ function start_wenet() {
         rtl.addEventListener("radio", (e) => console.log(e.detail.exception));
     }
 
+
+
+    rtl.start()
     rtlFreq()
     updateGain()
     updatePPM()
     updateBiasT()
 
-    rtl.start()
-
 }
 
 function updateBiasT() {
-    if (globalThis.Radio) {
+    if (rtl) {
         if (document.getElementById("rtlbiast").checked){
-            globalThis.Radio.enableBiasTee(true);
+            rtl.enableBiasTee(true);
             log_entry("Bias T enabled", "light")
         } else {
-            globalThis.Radio.enableBiasTee(false);
+            rtl.enableBiasTee(false);
             log_entry("Bias T disabled", "light")
         }
     }
