@@ -145,7 +145,6 @@ function addText(data) {
     log_entry(data, "primary")
 }
 
-var worker
 
 
 var rtl
@@ -173,8 +172,8 @@ function getBaudRate(){
 function start_wenet() {
     globalThis.spectrum_layout.shapes = []
 
-    worker = new Worker(new URL('./wenet-worker.js', import.meta.url), { type: "module" });
 
+    
     if (globalThis.audioContext) {
         globalThis.audioContext.suspend() // stop any running audio
     }
@@ -184,110 +183,122 @@ function start_wenet() {
 
     document.getElementById("alert").textContent = ""
     
-   
+    if (document.getElementById("wenet_version").value == "2"){
+        var rs232_frame = false
+        log_entry("Starting wenet in i2s mode")
+    } else {
+        var rs232_frame = true
+        log_entry("Starting wenet in rs232 mode")
+    }
 
+    if (globalThis.worker==undefined){
+        globalThis.worker = new Worker(new URL('./wenet-worker.js', import.meta.url), { type: "module" });
+    
 
-    worker.onmessage = function (event) {
-        if (event.data.type == "start") {
-            console.log("wenet worker loaded - sending config")
-            if (document.getElementById("wenet_version").value == "2"){
-                var rs232_frame = false
-                log_entry("Starting wenet in i2s mode")
-            } else {
-                var rs232_frame = true
-                log_entry("Starting wenet in rs232 mode")
+        globalThis.worker.onmessage = function (event) {
+            if (event.data.type == "start") {
+                console.log("wenet worker loaded - sending config")
+               
+                
+
+                globalThis.worker.postMessage({
+                    "config": {
+                        "rs232_framing": rs232_frame,
+                        "samplerate": getSampleRate(),
+                        "baudrate": getBaudRate()
+                    }
+                });
+                return
             }
-            
-
-            worker.postMessage({
-                "config": {
-                    "rs232_framing": rs232_frame,
-                    "samplerate": getSampleRate(),
-                    "baudrate": getBaudRate()
+            if (event.data.type == "image") {
+                addImage(...event.data.args)
+                return
+            }
+            if (event.data.type == "log") {
+                addText(event.data.args)
+                return
+            }
+            if (event.data.type == "gps") {
+                addFrameWeNet(event.data.args)
+                updatePlotsWenet(event.data.args)
+                if (last_callsign) {
+                    globalThis.updateMarker(
+                        {
+                            "payload_id": last_callsign,
+                            "latitude": event.data.args.latitude,
+                            "longitude": event.data.args.longitude,
+                        }
+                    )
                 }
-            });
-            return
-        }
-        if (event.data.type == "image") {
-            addImage(...event.data.args)
-            return
-        }
-        if (event.data.type == "log") {
-            addText(event.data.args)
-            return
-        }
-        if (event.data.type == "gps") {
-            addFrameWeNet(event.data.args)
-            updatePlotsWenet(event.data.args)
-            if (last_callsign) {
-                globalThis.updateMarker(
-                    {
-                        "payload_id": last_callsign,
-                        "latitude": event.data.args.latitude,
-                        "longitude": event.data.args.longitude,
+
+                return
+            }
+            if (event.data.type == "snr") {
+                globalThis.Plotly.extendTraces('snr', {
+                    y: [[event.data.args]],
+                    x: [[new Date().toISOString()]]
+                }, [0], 256)
+                return
+            }
+            if (event.data.type == "fft") {
+                const fft = event.data.fft
+                const spectrum_data = {
+                    y: [fft], 
+                    x: [[...Array(fft.length).keys()].map(x => ((x * (getSampleRate() / 2 / fft.length)) + (rtl.getFrequency())) / 1000 / 1000)]
+                };
+                globalThis.Plotly.update('spectrum',
+                    spectrum_data, globalThis.spectrum_layout
+                )
+                return
+            }
+            if (event.data.type == "time") {
+                latency = new Date() - event.data.time
+                document.getElementById("wenet_latency").innerText = latency + " ms"
+                if (latency > 1000) {
+                    document.getElementById("wenet_latency").style.color = "red"
+                    document.getElementById("alert").textContent = "Can't keep up; Dropping samples"
+                } else {
+                    document.getElementById("wenet_latency").style.color = "black"
+                    document.getElementById("alert").textContent = ""
+                }
+
+                if (event.data.time.getTime() == last_sent.getTime()) {
+                    // got the last message back, reset latency to 0 to reset any delay
+                    // this is a bit of a hack to keep slow clients working by only sending chunks (2s?) of RF to the modem
+                    latency = 0
+                }
+
+                return
+            }
+            if (event.data.type == "f_est") {
+                globalThis.spectrum_layout.annotations = event.data.args.map(
+                    (x) => {
+                        return {
+                            x: (x + rtl.getFrequency()) / 1000 / 1000,
+                            y: 0,
+                            yref: "paper",
+                            ayref: "paper",
+                            ay: 1000,
+                            showarrow: true,
+                            arrowside: "none",
+                            arrowwidth: 0.5,
+                            arrowcolor: "grey"
+
+                        }
                     }
                 )
+                return
             }
-
-            return
+            console.error("Unhandled message")
         }
-        if (event.data.type == "snr") {
-            globalThis.Plotly.extendTraces('snr', {
-                y: [[event.data.args]],
-                x: [[new Date().toISOString()]]
-            }, [0], 256)
-            return
-        }
-        if (event.data.type == "fft") {
-            const fft = event.data.fft
-            const spectrum_data = {
-                y: [fft], 
-                x: [[...Array(fft.length).keys()].map(x => ((x * (getSampleRate() / 2 / fft.length)) + (rtl.getFrequency())) / 1000 / 1000)]
-            };
-            globalThis.Plotly.update('spectrum',
-                spectrum_data, globalThis.spectrum_layout
-            )
-            return
-        }
-        if (event.data.type == "time") {
-            latency = new Date() - event.data.time
-            document.getElementById("wenet_latency").innerText = latency + " ms"
-            if (latency > 1000) {
-                document.getElementById("wenet_latency").style.color = "red"
-                document.getElementById("alert").textContent = "Can't keep up; Dropping samples"
-            } else {
-                document.getElementById("wenet_latency").style.color = "black"
-                document.getElementById("alert").textContent = ""
+    } else {
+        globalThis.worker.postMessage({
+            "config": {
+                "rs232_framing": rs232_frame,
+                "samplerate": getSampleRate(),
+                "baudrate": getBaudRate()
             }
-
-            if (event.data.time.getTime() == last_sent.getTime()) {
-                // got the last message back, reset latency to 0 to reset any delay
-                // this is a bit of a hack to keep slow clients working by only sending chunks (2s?) of RF to the modem
-                latency = 0
-            }
-
-            return
-        }
-        if (event.data.type == "f_est") {
-            globalThis.spectrum_layout.annotations = event.data.args.map(
-                (x) => {
-                    return {
-                        x: (x + rtl.getFrequency()) / 1000 / 1000,
-                        y: 0,
-                        yref: "paper",
-                        ayref: "paper",
-                        ay: 1000,
-                        showarrow: true,
-                        arrowside: "none",
-                        arrowwidth: 0.5,
-                        arrowcolor: "grey"
-
-                    }
-                }
-            )
-            return
-        }
-        console.error("Unhandled message")
+        });
     }
 
     class wenet {
@@ -341,13 +352,14 @@ function start_wenet() {
                        parseFloat(document.getElementById("uploader_alt").value)
                     ]
                 }
-
-                worker.postMessage({
-                    "buffer": buffer,
-                    "time": last_sent,
-                    "sh": sh,
-                    "freq": rtl.getFrequency()
-                })
+                if(globalThis.worker){
+                    globalThis.worker.postMessage({
+                        "buffer": buffer,
+                        "time": last_sent,
+                        "sh": sh,
+                        "freq": rtl.getFrequency()
+                    })
+                }
             }
 
 
@@ -365,7 +377,9 @@ function start_wenet() {
             getSampleRate(), // sample rate
         )
 
-        rtl.addEventListener("radio", (e) => console.log(e.detail.exception));
+        rtl.addEventListener("radio", (e) => {
+            console.log(e.detail.exception);console.log(e);
+        });
     }
 
 
@@ -444,9 +458,9 @@ function stop_wenet() {
     if (rtl){
         rtl.stop()
     }
-    if (worker){
-        worker.terminate()
-        worker = undefined
+    if (globalThis.worker){
+        globalThis.worker.terminate()
+        globalThis.worker = undefined
     
         document.getElementById("audio_start").removeAttribute("disabled");
         document.getElementById("audio_start").classList.remove("btn-outline-success")

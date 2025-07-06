@@ -1,5 +1,5 @@
 from _drs232_ldpc_cffi import ffi as drs232_ffi
-from _drs232_ldpc_cffi.lib import MAX_ITER, CODELENGTH, NUMBERPARITYBITS, NUMBERROWSHCOLS, MAX_ROW_WEIGHT, MAX_COL_WEIGHT, H_rows, H_cols, sd_to_llr, run_ldpc_decoder
+from _drs232_ldpc_cffi.lib import MAX_ITER, CODELENGTH, NUMBERPARITYBITS, NUMBERROWSHCOLS, MAX_ROW_WEIGHT, MAX_COL_WEIGHT, H_rows, H_cols, sd_to_llr, run_ldpc_decoder, scramble_code
 from _fsk_cffi import ffi
 from _fsk_cffi.lib import fsk_create, fsk_demod_sd, fsk_nin, fsk_get_demod_stats, fsk_demod, fsk_create_hbr, fsk_set_est_limits
 import enum
@@ -144,7 +144,7 @@ class DRS232_LDPC():
                     
             
             if self.state == DRS232_STATE.COLLECT_PACKET:
-                self.symbol_buf[self.ind] = symbol
+                self.symbol_buf[self.ind] = symbol * scramble_code(self.ind%len(scramble_code))
                 self.ind += 1
 
                 if self.ind == self.symbols_per_packet:

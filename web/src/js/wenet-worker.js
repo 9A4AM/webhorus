@@ -47,7 +47,7 @@ self.onmessage = async (event) => {
             import struct
             import logging
             logging.basicConfig()
-            logging.getLogger().setLevel(logging.DEBUG)
+            logging.getLogger().setLevel(logging.INFO)
             wenet = Wenet(
                 samplerate=self.samplerate,
                 baudrate=self.baudrate,

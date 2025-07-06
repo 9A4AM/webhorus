@@ -1212,8 +1212,9 @@ if (navigator.usb) {
 
 
 globalThis.update_wenet = function(){
-    updateRadio();
-    start_wenet();
+    if (globalThis.worker){
+        start_wenet();
+    }
 }
 
 globalThis.show_wizard = function(){
@@ -1268,7 +1269,7 @@ globalThis.show_wizard = function(){
         }
 
         globalThis.wizard = new bootstrap.Modal(document.getElementById('wizard'), {})
-        globalThis.wizard.show(); // TODO ON SAVE DELETE .wizard so that location picker works
+        globalThis.wizard.show();
     }
 }
 
