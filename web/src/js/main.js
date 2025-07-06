@@ -883,12 +883,13 @@ globalThis.startAudio = async function (constraint) {
             rtl_sdr_rate, // sample rate
         )
         globalThis.Radio.setSampleRate(rtl_sdr_rate)
+
+        globalThis.Radio.start()
         globalThis.rtlFreq()
         globalThis.updateGain()
         globalThis.updatePPM();
         globalThis.updateBiasT();
 
-        globalThis.Radio.start()
         globalThis.nin = globalThis.start_modem(globalThis.audioContext.sampleRate, false, rtl_freq_est_lower, rtl_freq_est_upper)
 
 
