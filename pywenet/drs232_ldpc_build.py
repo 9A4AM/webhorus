@@ -262,7 +262,7 @@ ffibuilder.set_source("_drs232_ldpc_cffi",
      #include "modem_stats.h"
      #include "phi0.h"
      #include "H2064_516_sparse.h"
-     #include "scramble_code.h"
+     #include "wenet_scramble.h"
 """,
       sources=[
         "./wenet/src/mpdecode_core.c",
