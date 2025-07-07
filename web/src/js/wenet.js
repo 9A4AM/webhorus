@@ -370,18 +370,19 @@ function start_wenet() {
 
     }
 
-    if (!(rtl)) {
-        rtl = new Radio(
-            new RTL2832U_Provider(),
-            new wenet(),
-            getSampleRate(), // sample rate
-        )
-
-        rtl.addEventListener("radio", (e) => {
-            console.log(e.detail.exception);console.log(e);
-        });
+    if (rtl) {
+        rtl.stop()
     }
+    
+    rtl = new Radio(
+        new RTL2832U_Provider(),
+        new wenet(),
+        getSampleRate(), // sample rate
+    )
 
+    rtl.addEventListener("radio", (e) => {
+        console.log(e.detail.exception);console.log(e);
+    });
 
 
     rtl.start()
