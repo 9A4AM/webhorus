@@ -62,6 +62,7 @@ jobs:
           aws-region: us-east-1
           role-to-assume: arn:aws:iam::143841941773:role/github
       - run: |
+          mv ./assets/webhorus-0.1.0-cp312-cp312-pyodide_2024_0_wasm32.whl ./assets/webhorus-0.1.0-cp312-cp312-pyodide_2024_0_wasm32_1.whl
           aws s3 sync . s3://horus.sondehub.org/ --delete
           aws s3 cp --content-type application/wasm ./assets/pyodide.asm.wasm s3://horus.sondehub.org/assets/pyodide.asm.wasm
           aws cloudfront create-invalidation --distribution-id EGCXXLSXJCNP5  --paths '/*'
