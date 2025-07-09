@@ -71,7 +71,10 @@ function loadMapPicker() {
         if (pickerMarker) {
             document.getElementById("uploader_lat").value = pickerMarker.getLatLng().lat
             document.getElementById("uploader_lon").value = pickerMarker.getLatLng().lng
+            document.getElementById("wizard_uploader_lat").value = pickerMarker.getLatLng().lat
+            document.getElementById("wizard_uploader_lon").value = pickerMarker.getLatLng().lng
             globalThis.saveSettings()
+            globalThis.wizard.show()
         }
         pickerMarker.remove()
         pickerMarker = undefined
@@ -114,28 +117,57 @@ globalThis.saveSettings = function () {
         localStorage.setItem("ppm", document.getElementById("ppm").value)
         localStorage.setItem("radio", document.querySelector('input[name="radioType"]:checked').value)
         localStorage.setItem("rtlaudio", document.getElementById("rtlaudio").checked)
+        localStorage.setItem("wenet_version", document.getElementById("wenet_version").value)
         log_entry(`Saved settings`, "light")
         report_position()
     }
 }
 
 globalThis.loadSettings = function () {
-    if (localStorage.getItem("callsign")) { document.getElementById("callsign").value = localStorage.getItem("callsign") }
-    if (localStorage.getItem("uploader_radio")) { document.getElementById("uploader_radio").value = localStorage.getItem("uploader_radio") }
-    if (localStorage.getItem("uploader_antenna")) { document.getElementById("uploader_antenna").value = localStorage.getItem("uploader_antenna") }
-    if (localStorage.getItem("uploader_lat")) { document.getElementById("uploader_lat").value = localStorage.getItem("uploader_lat") }
-    if (localStorage.getItem("uploader_lon")) { document.getElementById("uploader_lon").value = localStorage.getItem("uploader_lon") }
-    if (localStorage.getItem("uploader_alt")) { document.getElementById("uploader_alt").value = localStorage.getItem("uploader_alt") }
+    if (localStorage.getItem("callsign")) { 
+        document.getElementById("callsign").value = localStorage.getItem("callsign") 
+        document.getElementById("wizard_callsign").value  = localStorage.getItem("callsign") 
+    }
+    if (localStorage.getItem("uploader_radio")) { 
+        document.getElementById("uploader_radio").value = localStorage.getItem("uploader_radio") 
+        document.getElementById("wizard_uploader_radio").value = localStorage.getItem("uploader_radio") 
+    }
+    if (localStorage.getItem("uploader_antenna")) { 
+        document.getElementById("uploader_antenna").value = localStorage.getItem("uploader_antenna") 
+        document.getElementById("wizard_antenna").value = localStorage.getItem("uploader_antenna")
+    }
+    if (localStorage.getItem("uploader_lat")) { 
+        document.getElementById("uploader_lat").value = localStorage.getItem("uploader_lat") 
+        document.getElementById("wizard_uploader_lat").value = localStorage.getItem("uploader_lat") 
+    }
+    if (localStorage.getItem("uploader_lon")) { 
+        document.getElementById("uploader_lon").value = localStorage.getItem("uploader_lon")
+        document.getElementById("wizard_uploader_lon").value = localStorage.getItem("uploader_lon")
+
+     }
+    if (localStorage.getItem("uploader_alt")) { 
+        document.getElementById("uploader_alt").value = localStorage.getItem("uploader_alt") 
+        document.getElementById("wizard_uploader_alt").value = localStorage.getItem("uploader_alt")
+    }
     if (localStorage.getItem("upload_sondehub")) { document.getElementById("upload_sondehub").checked = (localStorage.getItem("upload_sondehub") == 'true') }
     if (localStorage.getItem("uploader_position")) { document.getElementById("uploader_position").checked = (localStorage.getItem("uploader_position") == 'true') }
     if (localStorage.getItem("dial")) { document.getElementById("dial").value = localStorage.getItem("dial") }
     if (localStorage.getItem("tone_spacing")) { document.getElementById("tone_spacing").value = localStorage.getItem("tone_spacing") }
     if (localStorage.getItem("rtl_freq")) { document.getElementById("rtl_freq").value = localStorage.getItem("rtl_freq") }
-    if (localStorage.getItem("gain")) { document.getElementById("gain").value = localStorage.getItem("gain") }
-    if (localStorage.getItem("ppm")) { document.getElementById("ppm").value = localStorage.getItem("ppm") }
+    if (localStorage.getItem("gain")) { 
+        document.getElementById("gain").value = localStorage.getItem("gain")
+        document.getElementById("wizard_gain").value = localStorage.getItem("gain")
+    }
+    if (localStorage.getItem("ppm")) { 
+        document.getElementById("ppm").value = localStorage.getItem("ppm") ;
+        document.getElementById("wizard_ppm").value = localStorage.getItem("ppm")
+    }
     if (localStorage.getItem("rtlaudio")) { document.getElementById("rtlaudio").checked = (localStorage.getItem("rtlaudio") == 'true') }
-    if (localStorage.getItem("rtlbiast")) { document.getElementById("rtlbiast").checked = (localStorage.getItem("rtlbiast") == 'true') }
-
+    if (localStorage.getItem("rtlbiast")) { 
+        document.getElementById("rtlbiast").checked = (localStorage.getItem("rtlbiast") == 'true') 
+        document.getElementById("wizard_rtlbiast").checked = (localStorage.getItem("rtlbiast") == 'true') 
+    }
+    if (localStorage.getItem("wenet_version")) {document.getElementById("wenet_version").value = localStorage.getItem("wenet_version") }
     
     if (localStorage.getItem("radio")) {
         const radio = localStorage.getItem("radio");
@@ -144,6 +176,7 @@ globalThis.loadSettings = function () {
 
     globalThis.updateRadio()
     globalThis.updateGain()
+    globalThis.wizardUpdateGain()
     globalThis.updatePPM()
     globalThis.rtlaudio()
     globalThis.updateBiasT()
@@ -253,7 +286,7 @@ globalThis.updateMarker = function (data) {
     globalThis.trackMap.panTo(position);
 }
 
-globalThis.rx_packet = function (packet, sh_format, stats) {
+globalThis.rx_packet = function (packet, sh_format, stats, snr) {
     log_entry(JSON.stringify(packet.toJs()), "info")
 
     var freq_est = stats.toJs().f_est
@@ -283,7 +316,7 @@ globalThis.rx_packet = function (packet, sh_format, stats) {
         }
 
         // Mark will want me to do some peak hold stuff here, but honestly that just seems like too much work.
-        sh_packet['snr'] = stats.toJs().snr_est
+        sh_packet['snr'] = snr
         log_entry(`Posting telm.`, "light")
         const response = fetch("https://api.v2.sondehub.org/amateur/telemetry", {
             method: "PUT",
@@ -560,8 +593,16 @@ async function init_python() {
         requests.get = r_get
         from horusdemodlib.payloads import PAYLOAD_ID_LIST_URL, HORUS_CUSTOM_FIELD_URL
         from pyodide.http import pyfetch
-        payload_ids =  await (await pyfetch(PAYLOAD_ID_LIST_URL)).text()
-        payload_formats = await (await pyfetch(HORUS_CUSTOM_FIELD_URL)).text()
+        payload_ids = ""
+        try:
+            payload_ids =  await (await pyfetch(PAYLOAD_ID_LIST_URL)).text()
+        except:
+            print("Issue fetching payload ids")
+        payload_formats=""
+        try:
+            payload_formats = await (await pyfetch(HORUS_CUSTOM_FIELD_URL)).text()
+        except:
+            print("Issue fetching payload formats")
         `)
     globalThis.pyodide.runPython(await (await fetch("/py/main.py")).text());
     log_entry("main.py loaded", "light")
@@ -575,6 +616,10 @@ async function init_python() {
     document.getElementById("audio_start").innerText = "Start"
     globalThis.VERSION = pyodide.runPython("VERSION")
     log_entry(`webhorus ready. version: ${globalThis.VERSION}`, "light")
+
+    globalThis.show_wizard();
+    document.getElementById("loading").classList.add("d-none")
+    document.getElementById("loaded").classList.remove("d-none")
 
     globalThis.payload_id_updater = setInterval(()=>{
         globalThis.pyodide.runPythonAsync(`
@@ -663,11 +708,13 @@ globalThis.updateRadio = function () {
 
     if (document.getElementById("radioWenet").checked){
         document.getElementById("rtlaudio").setAttribute("disabled", "disabled")
-        document.getElementById("tone_spacing").parentElement.classList.add("d-none")
+        document.getElementById("horusSection").classList.add("d-none")
+        document.getElementById("wenetSection").classList.remove("d-none")
         globalThis.setPageTitle("webwenet")
     } else {
+        document.getElementById("wenetSection").classList.add("d-none")
+        document.getElementById("horusSection").classList.remove("d-none")
         document.getElementById("rtlaudio").removeAttribute("disabled")
-        document.getElementById("tone_spacing").parentElement.classList.remove("d-none")
         globalThis.setPageTitle("webhorus")
     }
 
@@ -722,6 +769,15 @@ globalThis.updateGain = function () {
             globalThis.Radio.setGain(gain)
             log_entry(`Setting RTL Gain: ${gain}`, "light")
         }
+    }
+}
+
+globalThis.wizardUpdateGain = function () {
+    const gain = parseFloat(document.getElementById("wizard_gain").value)
+    if (gain == -0.5) {
+        document.getElementById("wizard_gaindb").value = `Auto`
+    } else {
+        document.getElementById("wizard_gaindb").value = `${gain} dB`
     }
 }
 
@@ -1136,6 +1192,15 @@ globalThis.setPageTitle = function(title){
 if (navigator.usb) {
     document.getElementById("radioRTL").removeAttribute("disabled")
     document.getElementById("radioWenet").removeAttribute("disabled")
+    document.getElementById("wizard_rtlsdr").removeAttribute("disabled")
+
+    if (navigator.userAgentData && navigator.userAgentData.platform == "Windows"){
+        document.getElementById("wizard_windows_warning").classList.remove("d-none")
+    }
+
+    if (navigator.userAgentData && navigator.userAgentData.platform == "Linux"){
+        document.getElementById("wizard_linux_warning").classList.remove("d-none")
+    }
 
     // set defaults for wenet domain
     if (window.location.hostname == "wenet.sondehub.org" || window.location.hostname == "localhost"){
@@ -1146,7 +1211,207 @@ if (navigator.usb) {
 } 
 
 
+globalThis.update_wenet = function(){
+    if (globalThis.worker){
+        start_wenet();
+    }
+}
+
+globalThis.show_wizard = function(){
+    if (window.location.hash.length > 1){
+        var parm_string = window.location.hash.slice(1);
+        var url_search_params = new URLSearchParams(parm_string)
+
+        if (url_search_params.has('freq')){
+            document.getElementById("wizard_freq").innerText=url_search_params.get("freq") + " MHz"
+            document.getElementById("wizard_dial_freq").innerText=(parseFloat(url_search_params.get("freq"))-0.001).toFixed(3) + " MHz"
+        } else {
+            return
+        }
+
+        if (url_search_params.has('mode')){
+            switch(url_search_params.get("mode")){
+                case "horus":
+                    document.getElementById("wizard_mode").innerText = "Horus Binary"
+                    break;
+                case "wenet_uart":
+                    document.getElementById("wizard_soundcard").setAttribute("disabled","")
+                    document.getElementById("wizard_mode").innerText = "Wenet Traditional"
+                    if (!navigator.usb){
+                        document.getElementById("wizard_no_usb").classList.remove("d-none")
+                    }
+                    break;
+                case "wenet_i2s":
+                    document.getElementById("wizard_soundcard").setAttribute("disabled","")
+                    document.getElementById("wizard_mode").innerText = "Wenet v2"
+                    if (!navigator.usb){
+                        document.getElementById("wizard_no_usb").classList.remove("d-none")
+                    }
+                    break
+                default:
+                    return
+            }
+        } else {
+            return
+        }
+
+        if (url_search_params.has('name')){
+            document.getElementById("wizard_title").innerText  = url_search_params.get("name") + " - Configuration Wizard"
+        }
+
+        if (url_search_params.get("mode") == 'horus' && url_search_params.has('spacing')) {
+            document.getElementById("wizard_tonespacing_enable").classList.remove("d-none")
+            document.getElementById("wizard_tonespacing").innerText = url_search_params.get("spacing")
+        }
+
+        if(!document.getElementById("wizard_callsign").value){
+            document.getElementById("wizard_callsign").value = "webhorus-" + Math.random().toString(36).slice(2, 8);
+        }
+
+        globalThis.wizard = new bootstrap.Modal(document.getElementById('wizard'), {})
+        globalThis.wizard.show();
+    }
+}
+
+globalThis.validateWizard = function(){
+    if (document.getElementById("wizard_callsign").value){
+        document.getElementById("wizard_start").removeAttribute("disabled")
+        document.getElementById("wizard_callsign").classList.remove("is-invalid")
+    } else {
+        document.getElementById("wizard_start").setAttribute("disabled","")
+        document.getElementById("wizard_callsign").classList.add("is-invalid")
+    }
+}
+
+globalThis.saveWizard = function(){
+    var parm_string = window.location.hash.slice(1);
+    var url_search_params = new URLSearchParams(parm_string)
+
+      switch(url_search_params.get("mode")){
+        case "horus":
+            if (document.getElementById("wizard_rtlsdr").checked){
+                document.getElementById("radioRTL").click()
+            } else {
+                document.getElementById("radioAudio").click()
+                localStorage.setItem("sound_adapter", document.getElementById("wizard_sound_devices").getElementsByClassName("active")[0].getAttribute("deviceid"))
+            }
+            break;
+        case "wenet_uart":
+            document.getElementById("radioWenet").click()
+            document.getElementById("wenet_version").value=1
+            break;
+        case "wenet_i2s":
+            document.getElementById("radioWenet").click()
+            document.getElementById("wenet_version").value=2
+            break
+        default:
+            return
+    }
+
+    document.getElementById("dial").value = (parseFloat(url_search_params.get("freq"))-0.001).toFixed(3)
+    document.getElementById("rtl_freq").value = (parseFloat(url_search_params.get("freq"))-0.001).toFixed(3)
+
+    if (url_search_params.get("mode") == 'horus' && url_search_params.has('spacing')) {
+        document.getElementById("tone_spacing").value = url_search_params.get("spacing")
+    }
+
+    document.getElementById("callsign").value =  document.getElementById("wizard_callsign").value 
+    document.getElementById("uploader_antenna").value =  document.getElementById("wizard_antenna").value 
+    document.getElementById("uploader_lat").value =  document.getElementById("wizard_uploader_lat").value 
+    document.getElementById("uploader_lon").value =  document.getElementById("wizard_uploader_lon").value 
+    document.getElementById("uploader_alt").value =  document.getElementById("wizard_uploader_alt").value 
+    document.getElementById("uploader_radio").value =  document.getElementById("wizard_uploader_radio").value 
+    document.getElementById("upload_sondehub").checked =  document.getElementById("wizard_upload_sondehub").checked 
+    document.getElementById("uploader_position").checked =  document.getElementById("wizard_uploader_position").checked 
+
+    document.getElementById("ppm").value =  document.getElementById("wizard_ppm").value 
+    document.getElementById("gain").value =  document.getElementById("wizard_gain").value 
+    document.getElementById("rtlbiast").checked =  document.getElementById("wizard_rtlbiast").checked 
+
+    globalThis.wizard = undefined
+    startAudio()
+    
+}
+
+globalThis.setWizardSound = function(elm){
+    document.getElementById("wizard_soundcard_label").innerText = this.innerText
+    for(let x of document.getElementById("wizard_sound_devices").children){
+        x.getElementsByTagName("a")[0].classList.remove("active")
+    }
+    this.classList.add("active")
+    document.getElementById("wizard_rtlsdr").checked=false
+    document.getElementById("wizard_soundcard").checked=true
+
+    globalThis.validateWizard()
+    document.getElementById("wizard_hidden").classList.remove("d-none")
+    document.getElementById("wizard_receiver_model_input").classList.remove("d-none")
+    
+    
+
+    var parm_string = window.location.hash.slice(1);
+    var url_search_params = new URLSearchParams(parm_string)
+    document.getElementById("wizard_instructions").innerText=`1. Set your receivers mode to USB (upper side band)
+    2. Remove any filtering (NR, NB). If the radio has a "data" mode select that
+    3. Set the frequency of the radio to ${(parseFloat(url_search_params.get("freq"))-0.001).toFixed(3)} MHz
+    `
+    document.getElementById("wizard_instructions").classList.remove("d-none")
+    document.getElementById("wizard_rtl_config").classList.add("d-none")
+}
+
+globalThis.setWizardRTL = function(elm){
+    globalThis.validateWizard()
+    document.getElementById("wizard_hidden").classList.remove("d-none")
+    document.getElementById("wizard_instructions").classList.add("d-none")
+    document.getElementById("wizard_rtl_config").classList.remove("d-none")
+    document.getElementById("wizard_receiver_model_input").classList.add("d-none")
+}
+
+globalThis.getWizardSoundDevices = function(){
+    // check if we already have a setting
+    var active_sound = document.getElementById("wizard_sound_devices").getElementsByClassName("active")
+    var active_id
+    if (active_sound.length > 0){
+        active_id = document.getElementById("wizard_sound_devices").getElementsByClassName("active")[0].getAttribute("deviceid")
+    }
+
+   
+
+    navigator.mediaDevices.getUserMedia({ audio: {} }).then((stream) => {
+        navigator.mediaDevices.enumerateDevices().then(devices => {
+            document.getElementById("wizard_sound_devices").innerHTML=""
+            for (var index in devices) {
+                if (devices[index].kind == 'audioinput') {
+                    var snd_li = document.createElement("li")
+                    var snd_opt = document.createElement("a")
+                    snd_opt.classList.add("dropdown-item")
+                    snd_opt.innerText = devices[index].label
+                    snd_opt.setAttribute("deviceId", devices[index].deviceId)
+                    if (active_id == devices[index].deviceId) {
+                        snd_opt.classList.add("active")
+                    }
+                    snd_opt.onclick = globalThis.setWizardSound
+                    snd_li.appendChild(snd_opt)
+                    document.getElementById("wizard_sound_devices").appendChild(snd_li)
+                }
+            }
+        }).catch((err)=>{
+        var snd_li = document.createElement("li")
+        snd_li.innerText = "Could not access sound"
+        snd_li.classList.add("dropdown-item")
+        document.getElementById("wizard_sound_devices").appendChild(snd_li)
+    })
+    }).catch((err)=>{
+        var snd_li = document.createElement("li")
+        snd_li.innerText = "Could not access sound"
+        snd_li.classList.add("dropdown-item")
+        document.getElementById("wizard_sound_devices").appendChild(snd_li)
+    })
+}
+
+
 globalThis.loadSettings();
+
+
 settings_loaded = true
 globalThis.pyodide = await loadPyodide();
 

@@ -11,11 +11,7 @@ import logging
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
 
-VERSION = "0.0.16"
-
-# horus_demod = demod.Demod(tone_spacing=int(document.getElementById("tone_spacing").value))
-
-
+VERSION = "0.1.0"
 
 buffer = b''
 
@@ -72,5 +68,5 @@ def write_audio(data):
                 packet, sh_meta, check_time=False if packet['payload_id'] == '4FSKTEST-V2' else True)
         else:
             sh_format = None
-        rx_packet(packet, sh_format, horus_demod.modem_stats)
+        rx_packet(packet, sh_format, horus_demod.modem_stats, horus_demod.snr)
     return to_js(horus_demod.nin)

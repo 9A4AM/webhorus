@@ -20,3 +20,6 @@ Web dev
 yarn install
 yarn dev
 ```
+
+### Fancy wizard links
+Some example links are provided in web/src/public/examplelink.html
