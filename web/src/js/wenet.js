@@ -109,13 +109,13 @@ function addFrameWeNet(data) {
 
 function addImage(data, callsign, id) {
     last_callsign = callsign;
-    let card_div = document.getElementById(callsign + "-" + id)
+    let card_div = document.getElementsByClassName("wenetimage")
     const frames_div = document.getElementById("frames")
-    if (card_div == null) {
+    if (card_div == null ||  card_div.length == 0 || card_div[0].getAttribute("imageid") !=  callsign + "-" + id) {
 
         const card = document.createElement("div")
-        card.id = callsign + "-" + id
-        card.classList = "card text-dark bg-light me-3"
+        card.setAttribute("imageid", callsign + "-" + id)
+        card.classList = "card text-dark bg-light me-3 wenetimage"
         const cardTitle = document.createElement("div")
         cardTitle.classList = "card-header h6"
         cardTitle.innerText = "[" + id + "] " + callsign
@@ -136,7 +136,7 @@ function addImage(data, callsign, id) {
         }
 
     } else {
-        card_div.getElementsByClassName("card-body")[0].getElementsByTagName("img")[0].src = "data:image/jpeg;base64," + btoa(data.reduce((data, byte) => data + String.fromCharCode(byte), ''));
+        card_div[0].getElementsByClassName("card-body")[0].getElementsByTagName("img")[0].src = "data:image/jpeg;base64," + btoa(data.reduce((data, byte) => data + String.fromCharCode(byte), ''));
     }
     document.title = "webwenet - " + callsign
 }
