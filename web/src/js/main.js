@@ -118,6 +118,7 @@ globalThis.saveSettings = function () {
         localStorage.setItem("radio", document.querySelector('input[name="radioType"]:checked').value)
         localStorage.setItem("rtlaudio", document.getElementById("rtlaudio").checked)
         localStorage.setItem("wenet_version", document.getElementById("wenet_version").value)
+        localStorage.setItem("baud", document.getElementById("baud").value)
         log_entry(`Saved settings`, "light")
         report_position()
     }
@@ -168,6 +169,7 @@ globalThis.loadSettings = function () {
         document.getElementById("wizard_rtlbiast").checked = (localStorage.getItem("rtlbiast") == 'true') 
     }
     if (localStorage.getItem("wenet_version")) {document.getElementById("wenet_version").value = localStorage.getItem("wenet_version") }
+    if (localStorage.getItem("baud")) {document.getElementById("baud").value = localStorage.getItem("baud") }
     
     if (localStorage.getItem("radio")) {
         const radio = localStorage.getItem("radio");
@@ -547,13 +549,32 @@ globalThis.updateStats = function (stats) {
     }, [0], 256)
 }
 
+globalThis.updateModem = function(){
+    if (globalThis.audioContext) { // check if we are running - probably need a better way of doing this...
+        if (document.getElementById("radioRTL").checked) {
+            // starting the modem will replace the existing one
+            globalThis.nin = globalThis.start_modem(globalThis.audioContext.sampleRate, parseInt(document.getElementById("baud").value), false, rtl_freq_est_lower, rtl_freq_est_upper)
+        } else {
+            globalThis.nin = globalThis.start_modem(globalThis.audioContext.sampleRate, parseInt(document.getElementById("baud").value))
+        }
+    }
+}
+
 globalThis.updateToneSpacing = function () {
     var tone_spacing = parseInt(document.getElementById("tone_spacing").value)
     if (isFinite(tone_spacing)) {
         log_entry(`Updating tone spacing: ${tone_spacing}`, "light")
-        globalThis.update_tone_spacing(tone_spacing)
+        globalThis.updateModem()
+        saveSettings()
     }
+    
+}
+
+globalThis.updateBaudRate = function () {
+    log_entry(`Updating baudrate: ${baud}`, "light")
+    globalThis.updateModem()
     saveSettings()
+
 }
 
 var VERSION
@@ -609,7 +630,6 @@ async function init_python() {
 
     globalThis.write_audio = globalThis.pyodide.runPython("write_audio")
     globalThis.fix_datetime = globalThis.pyodide.runPython("fix_datetime")
-    globalThis.update_tone_spacing = globalThis.pyodide.runPython("update_tone_spacing")
     globalThis.start_modem = globalThis.pyodide.runPython("start_modem")
 
     document.getElementById("audio_start").removeAttribute("disabled");
@@ -946,7 +966,7 @@ globalThis.startAudio = async function (constraint) {
         globalThis.updatePPM();
         globalThis.updateBiasT();
 
-        globalThis.nin = globalThis.start_modem(globalThis.audioContext.sampleRate, false, rtl_freq_est_lower, rtl_freq_est_upper)
+        globalThis.nin = globalThis.start_modem(globalThis.audioContext.sampleRate,parseInt(document.getElementById("baud").value), false, rtl_freq_est_lower, rtl_freq_est_upper)
 
 
         horusNode = new AudioWorkletNode(globalThis.audioContext, 'horus', {
@@ -1041,7 +1061,7 @@ globalThis.startAudio = async function (constraint) {
 
         log_entry(`Audio context sample rate: ${globalThis.audioContext.sampleRate}`, "light")
 
-        globalThis.nin = globalThis.start_modem(globalThis.audioContext.sampleRate)
+        globalThis.nin = globalThis.start_modem(globalThis.audioContext.sampleRate, parseInt(document.getElementById("baud").value))
 
         log_entry(`Initial nin: ${globalThis.nin}`, "light")
 

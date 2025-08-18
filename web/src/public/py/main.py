@@ -15,13 +15,14 @@ VERSION = "0.1.1"
 
 buffer = b''
 
-def start_modem(sample_rate, stereo_iq=False, freq_est_lower=100, freq_est_upper=4000):
+def start_modem(sample_rate, baud=100, stereo_iq=False, freq_est_lower=100, freq_est_upper=4000):
     global horus_demod
     horus_demod = demod.Demod(stereo_iq=stereo_iq,tone_spacing=int(
         document.getElementById("tone_spacing").value),
         sample_rate=sample_rate, 
         freq_est_lower=freq_est_lower, 
-        freq_est_upper=freq_est_upper
+        freq_est_upper=freq_est_upper,
+        rate=baud
     )
     print(freq_est_lower)
     print(freq_est_upper)
@@ -29,10 +30,6 @@ def start_modem(sample_rate, stereo_iq=False, freq_est_lower=100, freq_est_upper
     return horus_demod.nin
 
 
-def update_tone_spacing(tone_spacing):
-    global horus_demod
-    horus_demod = demod.Demod(tone_spacing=tone_spacing)
-    print(f"Updated tonespacing to : {tone_spacing}")
 
 
 def write_audio(data):

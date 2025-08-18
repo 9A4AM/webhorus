@@ -47,7 +47,7 @@ class Demod():
             self,
             libpath=f"",
             mode=horus_api.HORUS_MODE_BINARY_V1,
-            rate=-1,
+            rate=100,
             tone_spacing=-1,
             stereo_iq=False,
             verbose=False,
@@ -60,7 +60,7 @@ class Demod():
         self.snr_samples = []
 
         for x in range(8,50):
-            if (sample_rate/100)%x == 0: # we are assuming the mode is horus binary at 100 baud
+            if (sample_rate/rate)%x == 0:
                 p = x
                 print(f"Found P value: {p}")
                 break
