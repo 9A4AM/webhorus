@@ -32,7 +32,7 @@ jobs:
         shell: bash
       - name: cachebustfix
         run: |
-          mv web/src/public/assets/webhorus-0.1.0-cp312-cp312-pyodide_2024_0_wasm32.whl web/src/public/assets/webhorus-0.1.0-cp312-cp312-pyodide_2024_0_wasm32_1.whl
+          mv web/src/public/assets/webhorus-0.1.0-cp312-cp312-pyodide_2024_0_wasm32.whl web/src/public/assets/webhorus-0.1.0-cp312-cp312-pyodide_2024_0_wasm32.whl
       - name: Yarn
         run: |
           cd web
