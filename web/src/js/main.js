@@ -1282,6 +1282,17 @@ globalThis.show_wizard = function(){
         if (url_search_params.get("mode") == 'horus' && url_search_params.has('spacing')) {
             document.getElementById("wizard_tonespacing_enable").classList.remove("d-none")
             document.getElementById("wizard_tonespacing").innerText = url_search_params.get("spacing")
+        } else if (url_search_params.get("mode") == 'horus'){
+            document.getElementById("wizard_tonespacing_enable").classList.remove("d-none")
+            document.getElementById("wizard_tonespacing").innerText = "270"
+        }
+
+        if (url_search_params.get("mode") == 'horus' && url_search_params.has('baud')) {
+            document.getElementById("wizard_baud_enable").classList.remove("d-none")
+            document.getElementById("wizard_baud").innerText = url_search_params.get("baud")
+        } else if (url_search_params.get("mode") == 'horus'){
+            document.getElementById("wizard_baud_enable").classList.remove("d-none")
+            document.getElementById("wizard_baud").innerText = "100"
         }
 
         if(!document.getElementById("wizard_callsign").value){
@@ -1332,7 +1343,15 @@ globalThis.saveWizard = function(){
     document.getElementById("rtl_freq").value = (parseFloat(url_search_params.get("freq"))-0.001).toFixed(3)
 
     if (url_search_params.get("mode") == 'horus' && url_search_params.has('spacing')) {
-        document.getElementById("tone_spacing").value = url_search_params.get("spacing")
+        document.getElementById("baud").value = url_search_params.get("spacing")
+    } else if (url_search_params.get("mode") == 'horus'){
+        document.getElementById("baud").value = "270"
+    }
+
+    if (url_search_params.get("mode") == 'horus' && url_search_params.has('baud')) {
+        document.getElementById("baud").value = url_search_params.get("baud")
+    } else if (url_search_params.get("mode") == 'horus'){
+        document.getElementById("baud").value = "100"
     }
 
     document.getElementById("callsign").value =  document.getElementById("wizard_callsign").value 
