@@ -1344,9 +1344,9 @@ globalThis.saveWizard = function(){
     document.getElementById("rtl_freq").value = (parseFloat(url_search_params.get("freq"))-0.001).toFixed(3)
 
     if (url_search_params.get("mode") == 'horus' && url_search_params.has('spacing')) {
-        document.getElementById("baud").value = url_search_params.get("spacing")
+        document.getElementById("tone_spacing").value = url_search_params.get("spacing")
     } else if (url_search_params.get("mode") == 'horus'){
-        document.getElementById("baud").value = "270"
+        document.getElementById("tone_spacing").value = "270"
     }
 
     if (url_search_params.get("mode") == 'horus' && url_search_params.has('baud')) {
