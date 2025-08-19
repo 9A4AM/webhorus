@@ -118,6 +118,7 @@ globalThis.saveSettings = function () {
         localStorage.setItem("radio", document.querySelector('input[name="radioType"]:checked').value)
         localStorage.setItem("rtlaudio", document.getElementById("rtlaudio").checked)
         localStorage.setItem("wenet_version", document.getElementById("wenet_version").value)
+        localStorage.setItem("baud", document.getElementById("baud").value)
         log_entry(`Saved settings`, "light")
         report_position()
     }
@@ -168,6 +169,7 @@ globalThis.loadSettings = function () {
         document.getElementById("wizard_rtlbiast").checked = (localStorage.getItem("rtlbiast") == 'true') 
     }
     if (localStorage.getItem("wenet_version")) {document.getElementById("wenet_version").value = localStorage.getItem("wenet_version") }
+    if (localStorage.getItem("baud")) {document.getElementById("baud").value = localStorage.getItem("baud") }
     
     if (localStorage.getItem("radio")) {
         const radio = localStorage.getItem("radio");
@@ -547,13 +549,33 @@ globalThis.updateStats = function (stats) {
     }, [0], 256)
 }
 
+globalThis.updateModem = function(){
+    if (globalThis.audioContext) { // check if we are running - probably need a better way of doing this...
+        if (document.getElementById("radioRTL").checked) {
+            // starting the modem will replace the existing one
+            globalThis.nin = globalThis.start_modem(globalThis.audioContext.sampleRate, parseInt(document.getElementById("baud").value), false, rtl_freq_est_lower, rtl_freq_est_upper)
+        } else {
+            globalThis.nin = globalThis.start_modem(globalThis.audioContext.sampleRate, parseInt(document.getElementById("baud").value))
+        }
+    }
+}
+
 globalThis.updateToneSpacing = function () {
     var tone_spacing = parseInt(document.getElementById("tone_spacing").value)
     if (isFinite(tone_spacing)) {
         log_entry(`Updating tone spacing: ${tone_spacing}`, "light")
-        globalThis.update_tone_spacing(tone_spacing)
+        globalThis.updateModem()
+        saveSettings()
     }
+    
+}
+
+globalThis.updateBaudRate = function () {
+    var baud = parseInt(document.getElementById("baud").value)
+    log_entry(`Updating baudrate: ${baud}`, "light")
+    globalThis.updateModem()
     saveSettings()
+
 }
 
 var VERSION
@@ -573,7 +595,7 @@ async function init_python() {
         globalThis.pyodide.loadPackage("./assets/six-1.16.0-py2.py3-none-any.whl"),
         globalThis.pyodide.loadPackage("./assets/urllib3-2.2.3-py3-none-any.whl"),
         globalThis.pyodide.loadPackage("./assets/certifi-2024.12.14-py3-none-any.whl"),
-        globalThis.pyodide.loadPackage("./assets/webhorus-0.1.0-cp312-cp312-pyodide_2024_0_wasm32_1.whl")
+        globalThis.pyodide.loadPackage("./assets/webhorus-0.1.0-cp312-cp312-pyodide_2024_0_wasm32.whl")
     ]);
     log_entry("Python packages loaded", "light")
     await globalThis.pyodide.runPythonAsync(`
@@ -609,7 +631,6 @@ async function init_python() {
 
     globalThis.write_audio = globalThis.pyodide.runPython("write_audio")
     globalThis.fix_datetime = globalThis.pyodide.runPython("fix_datetime")
-    globalThis.update_tone_spacing = globalThis.pyodide.runPython("update_tone_spacing")
     globalThis.start_modem = globalThis.pyodide.runPython("start_modem")
 
     document.getElementById("audio_start").removeAttribute("disabled");
@@ -946,7 +967,7 @@ globalThis.startAudio = async function (constraint) {
         globalThis.updatePPM();
         globalThis.updateBiasT();
 
-        globalThis.nin = globalThis.start_modem(globalThis.audioContext.sampleRate, false, rtl_freq_est_lower, rtl_freq_est_upper)
+        globalThis.nin = globalThis.start_modem(globalThis.audioContext.sampleRate,parseInt(document.getElementById("baud").value), false, rtl_freq_est_lower, rtl_freq_est_upper)
 
 
         horusNode = new AudioWorkletNode(globalThis.audioContext, 'horus', {
@@ -1041,7 +1062,7 @@ globalThis.startAudio = async function (constraint) {
 
         log_entry(`Audio context sample rate: ${globalThis.audioContext.sampleRate}`, "light")
 
-        globalThis.nin = globalThis.start_modem(globalThis.audioContext.sampleRate)
+        globalThis.nin = globalThis.start_modem(globalThis.audioContext.sampleRate, parseInt(document.getElementById("baud").value))
 
         log_entry(`Initial nin: ${globalThis.nin}`, "light")
 
@@ -1262,6 +1283,17 @@ globalThis.show_wizard = function(){
         if (url_search_params.get("mode") == 'horus' && url_search_params.has('spacing')) {
             document.getElementById("wizard_tonespacing_enable").classList.remove("d-none")
             document.getElementById("wizard_tonespacing").innerText = url_search_params.get("spacing")
+        } else if (url_search_params.get("mode") == 'horus'){
+            document.getElementById("wizard_tonespacing_enable").classList.remove("d-none")
+            document.getElementById("wizard_tonespacing").innerText = "270"
+        }
+
+        if (url_search_params.get("mode") == 'horus' && url_search_params.has('baud')) {
+            document.getElementById("wizard_baud_enable").classList.remove("d-none")
+            document.getElementById("wizard_baud").innerText = url_search_params.get("baud")
+        } else if (url_search_params.get("mode") == 'horus'){
+            document.getElementById("wizard_baud_enable").classList.remove("d-none")
+            document.getElementById("wizard_baud").innerText = "100"
         }
 
         if(!document.getElementById("wizard_callsign").value){
@@ -1313,6 +1345,14 @@ globalThis.saveWizard = function(){
 
     if (url_search_params.get("mode") == 'horus' && url_search_params.has('spacing')) {
         document.getElementById("tone_spacing").value = url_search_params.get("spacing")
+    } else if (url_search_params.get("mode") == 'horus'){
+        document.getElementById("tone_spacing").value = "270"
+    }
+
+    if (url_search_params.get("mode") == 'horus' && url_search_params.has('baud')) {
+        document.getElementById("baud").value = url_search_params.get("baud")
+    } else if (url_search_params.get("mode") == 'horus'){
+        document.getElementById("baud").value = "100"
     }
 
     document.getElementById("callsign").value =  document.getElementById("wizard_callsign").value 

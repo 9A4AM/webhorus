@@ -385,6 +385,16 @@
                                             value="270">
                                     </div>
                                 </div>
+                                <div class="col-md-4">
+                                    <div class="col mb-2">
+                                        <label class="form-label col-form-label" for="baud">Baud rate</label>
+                                        <select id="baud" class="form-select"  onchange="updateBaudRate()" aria-label="Baud Rate">
+                                            <option value="50" >50</option>
+                                            <option value="100" selected>100 (default)</option>
+                                            <option value="300">300</option>
+                                        </select>
+                                    </div>
+                                </div>
 
                             </div>
                         </div>
@@ -469,7 +479,9 @@
                             <b>Dial frequency: </b> <span id="wizard_dial_freq">420.69</span><br>
                             <b>Mode: </b> <span id="wizard_mode">Horus</span><br>
                             <span id="wizard_tonespacing_enable" class="d-none"><b>Tone spacing: </b> <span
-                                    id="wizard_tonespacing">1</span></span>
+                                    id="wizard_tonespacing">1</span></span><br>
+                            <span id="wizard_baud_enable" class="d-none"><b>Baud: </b> <span
+                                    id="wizard_baud">1</span></span><br>
                         </p>
                         <hr>
                         <form>
