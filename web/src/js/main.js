@@ -595,7 +595,7 @@ async function init_python() {
         globalThis.pyodide.loadPackage("./assets/six-1.16.0-py2.py3-none-any.whl"),
         globalThis.pyodide.loadPackage("./assets/urllib3-2.2.3-py3-none-any.whl"),
         globalThis.pyodide.loadPackage("./assets/certifi-2024.12.14-py3-none-any.whl"),
-        globalThis.pyodide.loadPackage("./assets/webhorus-0.1.0-cp312-cp312-pyodide_2024_0_wasm32.whl")
+        globalThis.pyodide.loadPackage("./assets/webhorus-0.1.4-cp312-cp312-pyodide_2024_0_wasm32.whl")
     ]);
     log_entry("Python packages loaded", "light")
     await globalThis.pyodide.runPythonAsync(`
