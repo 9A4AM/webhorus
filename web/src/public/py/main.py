@@ -11,7 +11,7 @@ import logging
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
 
-VERSION = "0.1.2"
+VERSION = "0.1.3"
 
 buffer = b''
 
