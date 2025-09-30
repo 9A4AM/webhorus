@@ -448,37 +448,59 @@ globalThis.Plotly.newPlot('snr', [{
 }, { responsive: true, staticPlot: true });
 
 globalThis.spectrum_layout = {
-    autosize: true,
-    margin: {
-        l: 20,
-        r: 0,
-        b: 30,
-        t: 5,
-        pad: 0
+  grid: { rows: 2, columns: 1, pattern: 'independent', roworder: 'top to bottom', rowheights: [0.33, 0.67] },
+  autosize: true,
+  height: 300,
+  margin: {
+    l: 20,
+    r: 0,
+    b: 30,
+    t: 5,
+    pad: 0
+  },
+  title: {
+    text: 'Spectrum (dB)',
+    font: {
+        size: "12"
     },
-    title: {
-        text: 'Spectrum (dB)',
-        font: {
-            size: "12"
-        },
-        yref: "paper",
-        yanchor: "top",
-    },
-    yaxis: {
-        //  type: 'log',
-        tickfont: {
-            size: "9"
-        },
-        autorangeoptions: {
-        }
-    }
+    yref: "paper",
+    yanchor: "top",
+  },
+  xaxis:  { title: 'Frequency [Hz]', tickfont: { size: 12 } },
+  yaxis:  { title: 'dB',           tickfont: { size: 12 } },
+  yaxis2: { title: 'Time', autorange: 'reversed', tickfont: { size: 12 } }
+};
 
-}
-globalThis.Plotly.newPlot('spectrum', [{
-    y: [],
-    x: [],
-    mode: 'lines'
-}], globalThis.spectrum_layout, { responsive: true, staticPlot: true });
+// placeholder traces
+const traceSpectrum = {
+  x: [], y: [], mode: 'lines', name: 'Spectrum', xaxis: 'x', yaxis: 'y', 
+};
+const traceWaterfall = {
+  type: 'heatmap',
+  x: [], y: [], z: [],
+  colorscale: 'Portland',
+  showscale: true,
+  xaxis: 'x2',
+  yaxis: 'y2',
+  zauto: false,
+  zsmooth: false
+};
+
+globalThis.spectrum_layout.xaxis2 = {
+  showticklabels: false,
+  showgrid: false,
+  zeroline: false,
+  title: ''
+};
+
+globalThis.spectrum_layout.yaxis2 = {
+  autorange: true,
+  showticklabels: false,
+  showgrid: false,
+  zeroline: false
+};
+
+globalThis.Plotly.newPlot('spectrum', [traceSpectrum, traceWaterfall], globalThis.spectrum_layout, { responsive: true, staticPlot: true });
 
 globalThis.Plotly.newPlot('plots', [], {
     autosize: true,

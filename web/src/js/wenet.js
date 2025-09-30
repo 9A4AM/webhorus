@@ -10,6 +10,23 @@ var last_callsign;
 
 var latency = 0;
 
+const WF_MAX_ROWS = 120;
+const WF_ZMIN = -60;
+globalThis.wfZ = [];
+globalThis.wfY = [];
+globalThis.wfRow = 0;
+
+function updateZScaleFromBuffer() {
+  const flat = globalThis.wfZ.flat();
+  const sorted = [...flat].filter(Number.isFinite).sort((a,b)=>a-b);
+  const p = q => sorted[Math.floor(q * (sorted.length - 1))];                  
+  const p95 = p(0.95);                    
+  const zmin = p95 - 10;
+  const zmax = p95 + 2;
+
+  globalThis.Plotly.restyle('spectrum', { zmin: [zmin], zmax: [zmax] }, [1]);
+}
+
 function updatePlotsWenet(data) {
     var axis_ids = []
     var plot_data = []
@@ -241,15 +258,35 @@ function start_wenet() {
                 return
             }
             if (event.data.type == "fft") {
-                const fft = event.data.fft
-                const spectrum_data = {
-                    y: [fft], 
-                    x: [[...Array(fft.length).keys()].map(x => ((x * (getSampleRate() / 2 / fft.length)) + (rtl.getFrequency())) / 1000 / 1000)]
-                };
-                globalThis.Plotly.update('spectrum',
-                    spectrum_data, globalThis.spectrum_layout
-                )
-                return
+                const fft = event.data.fft;
+                const N = fft.length;
+                const sr = getSampleRate(); // 921416 or 960000
+                const binHz = sr / 2 / N;
+
+                const xLine = Array.from({length: N}, (_, i) =>
+                    (i * binHz + rtl.getFrequency()) / 1e6
+                );
+
+                globalThis.Plotly.restyle('spectrum', { x: [xLine], y: [fft] }, [0]);
+
+                const row = fft.map(v => (Number.isFinite(v) ? v : WF_ZMIN - 1));
+                globalThis.wfZ.push(row);
+                globalThis.wfY.push(globalThis.wfRow++);
+
+                updateZScaleFromBuffer();
+
+                if (globalThis.wfZ.length > WF_MAX_ROWS) {
+                    globalThis.wfZ.shift();
+                    globalThis.wfY.shift();
+                }
+
+                globalThis.Plotly.restyle('spectrum', {
+                x: [xLine],
+                y: [globalThis.wfY],   // timeline
+                z: [globalThis.wfZ]    // matrix
+                }, [1]);
+
+                return;
             }
             if (event.data.type == "time") {
                 latency = new Date() - event.data.time

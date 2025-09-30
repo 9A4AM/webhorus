@@ -11,7 +11,7 @@ cd emsdk
 PYODIDE_EMSCRIPTEN_VERSION=$(pyodide config get emscripten_version)
 ./emsdk install ${PYODIDE_EMSCRIPTEN_VERSION}
 ./emsdk activate ${PYODIDE_EMSCRIPTEN_VERSION}
-source emsdk_env.sh
+. ./emsdk_env.sh
 pyodide build --outdir web/assets/
 ```
 

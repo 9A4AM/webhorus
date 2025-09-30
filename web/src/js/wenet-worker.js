@@ -202,6 +202,6 @@ const modem_states = setInterval(() => {
     self.postMessage({ "type": "snr", "args": snr })
     self.postMessage({ "type": "fft", "fft": fft })
     self.postMessage({ "type": "f_est", "args": f_est })
-}, 1000)
+}, 500)
 
 self.postMessage({ "type": "start"})
