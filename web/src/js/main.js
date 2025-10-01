@@ -25,7 +25,11 @@ const rtl_offset = -3000; // we offset the dial frequency by this much so we can
 const rtl_freq_est_lower = 1000;
 const rtl_freq_est_upper = 5000;
 
-
+globalThis.WF_MAX_ROWS = 120;
+globalThis.WF_ZMIN = -60;
+globalThis.wfZ = [];
+globalThis.wfY = [];
+globalThis.wfRow = 0;
 
 const fftSize = 16384
 
@@ -456,7 +460,7 @@ globalThis.Plotly.newPlot('snr', [{
 
 globalThis.spectrum_layout = {
   autosize: true,
-  margin: { l: 20, r: 20, b: 20, t: 20, pad: 0 },
+  margin: { l: 40, r: 40, b: 40, t: 20, pad: 0 },
   xaxis: {
     title: 'Frequency [Hz]',
     tickfont: { size: 12 }
@@ -529,8 +533,8 @@ globalThis.updateStats = function (stats) {
             ay: 1000,
             showarrow: true,
             arrowside: "none",
-            arrowwidth: 0.5,
-            arrowcolor: "grey"
+            arrowwidth: 3,
+            arrowcolor: "cyan"
 
         }
     })
@@ -1024,17 +1028,32 @@ globalThis.startAudio = async function (constraint) {
             if (globalThis.analyserUpdate) {
                 clearInterval(globalThis.analyserUpdate)
             }
-            globalThis.analyserUpdate = setInterval(() => {
-                const freqData = new Float32Array(globalThis.bufferLength);
-                analyser.getFloatFrequencyData(freqData);
-                const spectrum_data = {
-                    y: [freqData.slice(0, globalThis.max_index)],
-                    x: [globalThis.filtered_x_values]
-                };
-                globalThis.Plotly.update('spectrum',
-                    spectrum_data,
-                    globalThis.spectrum_layout)
-            }, 200)
+           globalThis.analyserUpdate = setInterval(() => {
+                const buf = new Float32Array(globalThis.bufferLength);
+                analyser.getFloatFrequencyData(buf);
+
+                const row = Array.from(buf.slice(0, globalThis.max_index), v =>
+                    Number.isFinite(v) ? v : (globalThis.WF_ZMIN - 1)
+                );
+
+                // 2) Puffer pflegen
+                globalThis.wfZ.push(row);
+                globalThis.wfY.push(globalThis.wfRow++);
+                if (globalThis.wfZ.length > globalThis.WF_MAX_ROWS) {
+                    globalThis.wfZ.shift();
+                    globalThis.wfY.shift();
+                }
+
+                globalThis.updateZScaleFromBuffer()
+
+                globalThis.Plotly.restyle('spectrum', {
+                    x: [globalThis.filtered_x_values],
+                    y: [globalThis.wfY],
+                    z: [globalThis.wfZ],
+                }, [0]);
+
+                console.log("wfZ: "+globalThis.wfZ.length)
+            }, 200);
             log_entry(`FFT Started`, "light")
 
 
@@ -1122,16 +1141,30 @@ globalThis.startAudio = async function (constraint) {
                 clearInterval(globalThis.analyserUpdate)
             }
             globalThis.analyserUpdate = setInterval(() => {
-                const freqData = new Float32Array(globalThis.bufferLength);
-                analyser.getFloatFrequencyData(freqData);
-                const spectrum_data = {
-                    y: [freqData.slice(0, globalThis.max_index)],
-                    x: [globalThis.filtered_x_values]
-                };
-                globalThis.Plotly.update('spectrum',
-                    spectrum_data,
-                    globalThis.spectrum_layout)
-            }, 200)
+                const buf = new Float32Array(globalThis.bufferLength);
+                analyser.getFloatFrequencyData(buf);
+
+                const row = Array.from(buf.slice(0, globalThis.max_index), v =>
+                    Number.isFinite(v) ? v : (globalThis.WF_ZMIN - 1)
+                );
+
+                globalThis.wfZ.push(row);
+                globalThis.wfY.push(globalThis.wfRow++);
+                if (globalThis.wfZ.length > globalThis.WF_MAX_ROWS) {
+                    globalThis.wfZ.shift();
+                    globalThis.wfY.shift();
+                }
+
+                globalThis.updateZScaleFromBuffer()
+
+                globalThis.Plotly.restyle('spectrum', {
+                    x: [globalThis.filtered_x_values],
+                    y: [globalThis.wfY],
+                    z: [globalThis.wfZ],
+                }, [0]);
+
+                console.log("wfZ: "+globalThis.wfZ.length)
+            }, 200);
             log_entry(`FFT Started`, "light")
 
 

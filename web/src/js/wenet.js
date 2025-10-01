@@ -10,13 +10,7 @@ var last_callsign;
 
 var latency = 0;
 
-const WF_MAX_ROWS = 120;
-const WF_ZMIN = -60;
-globalThis.wfZ = [];
-globalThis.wfY = [];
-globalThis.wfRow = 0;
-
-function updateZScaleFromBuffer() {
+globalThis.updateZScaleFromBuffer = function() {
   const flat = globalThis.wfZ.flat();
   const sorted = [...flat].filter(Number.isFinite).sort((a,b)=>a-b);
   const p = q => sorted[Math.floor(q * (sorted.length - 1))];                  
@@ -267,13 +261,13 @@ function start_wenet() {
                     (i * binHz + rtl.getFrequency()) / 1e6
                 );
 
-                const row = fft.map(v => (Number.isFinite(v) ? v : WF_ZMIN - 1));
+                const row = fft.map(v => (Number.isFinite(v) ? v : globalThis.WF_ZMIN - 1));
                 globalThis.wfZ.push(row);
                 globalThis.wfY.push(globalThis.wfRow++);
 
-                updateZScaleFromBuffer();
+                globalThis.updateZScaleFromBuffer();
 
-                if (globalThis.wfZ.length > WF_MAX_ROWS) {
+                if (globalThis.wfZ.length > globalThis.WF_MAX_ROWS) {
                     globalThis.wfZ.shift();
                     globalThis.wfY.shift();
                 }
@@ -316,8 +310,8 @@ function start_wenet() {
                             ay: 1000,
                             showarrow: true,
                             arrowside: "none",
-                            arrowwidth: 0.5,
-                            arrowcolor: "grey"
+                            arrowwidth: 3,
+                            arrowcolor: "cyan"
 
                         }
                     }
