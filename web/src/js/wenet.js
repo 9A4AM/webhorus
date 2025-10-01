@@ -24,7 +24,7 @@ function updateZScaleFromBuffer() {
   const zmin = p95 - 10;
   const zmax = p95 + 2;
 
-  globalThis.Plotly.restyle('spectrum', { zmin: [zmin], zmax: [zmax] }, [1]);
+  globalThis.Plotly.restyle('spectrum', { zmin: [zmin], zmax: [zmax] }, [0]);
 }
 
 function updatePlotsWenet(data) {
@@ -216,7 +216,7 @@ function start_wenet() {
             if (event.data.type == "start") {
                 console.log("wenet worker loaded - sending config")
                
-                
+                globalThis.set_worker_fft_rate()
 
                 globalThis.worker.postMessage({
                     "config": {
@@ -267,8 +267,6 @@ function start_wenet() {
                     (i * binHz + rtl.getFrequency()) / 1e6
                 );
 
-                globalThis.Plotly.restyle('spectrum', { x: [xLine], y: [fft] }, [0]);
-
                 const row = fft.map(v => (Number.isFinite(v) ? v : WF_ZMIN - 1));
                 globalThis.wfZ.push(row);
                 globalThis.wfY.push(globalThis.wfRow++);
@@ -284,7 +282,7 @@ function start_wenet() {
                 x: [xLine],
                 y: [globalThis.wfY],   // timeline
                 z: [globalThis.wfZ]    // matrix
-                }, [1]);
+                }, [0]);
 
                 return;
             }

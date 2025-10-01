@@ -107,6 +107,7 @@ globalThis.saveSettings = function () {
         localStorage.setItem("uploader_lat", document.getElementById("uploader_lat").value)
         localStorage.setItem("uploader_lon", document.getElementById("uploader_lon").value)
         localStorage.setItem("uploader_alt", document.getElementById("uploader_alt").value)
+        localStorage.setItem("fft_rate", document.getElementById("fft_rate").value)
         localStorage.setItem("upload_sondehub", document.getElementById("upload_sondehub").checked)
         localStorage.setItem("uploader_position", document.getElementById("uploader_position").checked)
         localStorage.setItem("rtlbiast", document.getElementById("rtlbiast").checked)
@@ -121,6 +122,9 @@ globalThis.saveSettings = function () {
         localStorage.setItem("baud", document.getElementById("baud").value)
         log_entry(`Saved settings`, "light")
         report_position()
+
+        // send current fft rate to worker
+        globalThis.set_worker_fft_rate()
     }
 }
 
@@ -149,6 +153,9 @@ globalThis.loadSettings = function () {
     if (localStorage.getItem("uploader_alt")) { 
         document.getElementById("uploader_alt").value = localStorage.getItem("uploader_alt") 
         document.getElementById("wizard_uploader_alt").value = localStorage.getItem("uploader_alt")
+    }
+    if (localStorage.getItem("fft_rate")) { 
+        document.getElementById("fft_rate").value = localStorage.getItem("fft_rate")
     }
     if (localStorage.getItem("upload_sondehub")) { document.getElementById("upload_sondehub").checked = (localStorage.getItem("upload_sondehub") == 'true') }
     if (localStorage.getItem("uploader_position")) { document.getElementById("uploader_position").checked = (localStorage.getItem("uploader_position") == 'true') }
@@ -448,33 +455,19 @@ globalThis.Plotly.newPlot('snr', [{
 }, { responsive: true, staticPlot: true });
 
 globalThis.spectrum_layout = {
-  grid: { rows: 2, columns: 1, pattern: 'independent', roworder: 'top to bottom', rowheights: [0.33, 0.67] },
   autosize: true,
-  height: 300,
-  margin: {
-    l: 20,
-    r: 0,
-    b: 30,
-    t: 5,
-    pad: 0
+  margin: { l: 20, r: 20, b: 20, t: 20, pad: 0 },
+  xaxis: {
+    title: 'Frequency [Hz]',
+    tickfont: { size: 12 }
   },
-  title: {
-    text: 'Spectrum (dB)',
-    font: {
-        size: "12"
-    },
-    yref: "paper",
-    yanchor: "top",
-  },
-  xaxis:  { title: 'Frequency [Hz]', tickfont: { size: 12 } },
-  yaxis:  { title: 'dB',           tickfont: { size: 12 } },
-  yaxis2: { title: 'Time', autorange: 'reversed', tickfont: { size: 12 } }
+  yaxis: {
+    title: 'Time',
+    autorange: 'reversed',
+    tickfont: { size: 12 }
+  }
 };
 
-// placeholder traces
-const traceSpectrum = {
-  x: [], y: [], mode: 'lines', name: 'Spectrum', xaxis: 'x', yaxis: 'y', 
-};
 const traceWaterfall = {
   type: 'heatmap',
   x: [], y: [], z: [],
@@ -486,21 +479,21 @@ const traceWaterfall = {
   zsmooth: false
 };
 
-globalThis.spectrum_layout.xaxis2 = {
+globalThis.spectrum_layout.xaxis = {
   showticklabels: false,
   showgrid: false,
   zeroline: false,
   title: ''
 };
 
-globalThis.spectrum_layout.yaxis2 = {
+globalThis.spectrum_layout.yaxis = {
   autorange: true,
   showticklabels: false,
   showgrid: false,
   zeroline: false
 };
 
-globalThis.Plotly.newPlot('spectrum', [traceSpectrum, traceWaterfall], globalThis.spectrum_layout, { responsive: true, staticPlot: true });
+globalThis.Plotly.newPlot('spectrum', [traceWaterfall], globalThis.spectrum_layout, { responsive: true, staticPlot: true });
 
 globalThis.Plotly.newPlot('plots', [], {
     autosize: true,
@@ -1146,6 +1139,17 @@ globalThis.startAudio = async function (constraint) {
         }
     }
 };
+
+globalThis.set_worker_fft_rate = function() {
+    if (globalThis.worker){
+        // send current fft rate to worker
+        const val = parseInt(document.getElementById("fft_rate").value, 10);
+        if (isFinite(val) && val > 50) {
+            globalThis.worker.postMessage({ type: "setInterval", interval: val });
+            console.log("FFT interval updated to", val, "ms");
+        }
+    }
+}
 
 function report_position() {
     const lat = parseFloat(document.getElementById("uploader_lat").value)

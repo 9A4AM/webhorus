@@ -5,6 +5,9 @@ var wenet
 var write_wenet
 let payload_callsign
 
+let modem_states = null;
+let fftInterval = 500; // default
+
 // Now load any packages we need, run the code, and send the result back.
 const pyodide = await loadPyodide();
 await Promise.all([
@@ -35,6 +38,11 @@ var baudrate
 var rs232_framing
 
 self.onmessage = async (event) => {
+
+    if (event.data.type === "setInterval") {
+        console.log("setInterval in Worker to: " + event.data.interval)
+        startFFTLoop(event.data.interval);
+    }
     
     if ("config" in event.data) {
         self.samplerate = event.data.config.samplerate
@@ -193,8 +201,11 @@ const sh_upload = setInterval(() => {
 
 var snr
 var f_est
+function startFFTLoop(interval) {
+  if (modem_states) clearInterval(modem_states);
+  fftInterval = interval;
 
-const modem_states = setInterval(() => {
+  modem_states = setInterval(() => {
     var fft = pyodide.runPython("list(wenet.wenet.fsk.fft_est[0:wenet.wenet.fsk.Ndft//2])").toJs()
     fft = fft.map((x) => Math.log10(x) * 10)
     snr = wenet.wenet.stats.snr_est
@@ -202,6 +213,9 @@ const modem_states = setInterval(() => {
     self.postMessage({ "type": "snr", "args": snr })
     self.postMessage({ "type": "fft", "fft": fft })
     self.postMessage({ "type": "f_est", "args": f_est })
-}, 500)
+  }, fftInterval);
+}
+
+startFFTLoop(500);
 
 self.postMessage({ "type": "start"})
