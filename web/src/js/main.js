@@ -472,10 +472,24 @@ globalThis.spectrum_layout = {
   }
 };
 
+const turboColorscale = [
+  [0.0,   '#30123b'],
+  [0.1,   '#4145ab'],
+  [0.2,   '#4673e0'],
+  [0.3,   '#34a6dd'],
+  [0.4,   '#1ed5b6'],
+  [0.5,   '#32f17e'],
+  [0.6,   '#90f539'],
+  [0.7,   '#e4e61a'],
+  [0.8,   '#fcb414'],
+  [0.9,   '#f4630a'],
+  [1.0,   '#b21b0a']
+];
+
 const traceWaterfall = {
   type: 'heatmap',
   x: [], y: [], z: [],
-  colorscale: 'Portland',
+  colorscale: turboColorscale,
   showscale: true,
   xaxis: 'x2',
   yaxis: 'y2',
@@ -525,34 +539,45 @@ globalThis.updateStats = function (stats) {
         if (document.getElementById("radioRTL").checked) {
             x = rtl_offset + x
         }
+
         return {
             x: x,
-            y: 0,
+            y: 0.8,
             yref: "paper",
-            ayref: "paper",
             ay: 1000,
+            ayref: "paper",
             showarrow: true,
-            arrowside: "none",
-            arrowwidth: 3,
-            arrowcolor: "cyan"
-
+            arrowhead: 2,
+            arrowsize: 2, 
+            arrowcolor: "white"
         }
+
     })
 
     if (document.getElementById("radioRTL").checked) {
         globalThis.spectrum_layout.shapes = [
             {
                 type: 'rect',
-                // x-reference is assigned to the x-values
-                xref: 'x',
-                // y-reference is assigned to the plot paper [0,1]
                 yref: 'paper',
-                x0: rtl_freq_est_lower + rtl_offset,
+                x0: rtl_offset,
                 y0: 0,
-                x1: rtl_freq_est_upper + rtl_offset,
+                x1: rtl_freq_est_lower + rtl_offset,
                 y1: 1,
                 fillcolor: '#d3d3d3',
-                opacity: 0.2,
+                opacity: 0.5,
+                line: {
+                    width: 0
+                }
+            },
+            {
+                type: 'rect',
+                yref: 'paper',
+                x0: rtl_freq_est_upper + rtl_offset,
+                y0: 0,
+                x1: rtl_offset * -1,
+                y1: 1,
+                fillcolor: '#d3d3d3',
+                opacity: 0.5,
                 line: {
                     width: 0
                 }
@@ -1028,6 +1053,16 @@ globalThis.startAudio = async function (constraint) {
             if (globalThis.analyserUpdate) {
                 clearInterval(globalThis.analyserUpdate)
             }
+
+            //Setup arrays to a full buffer to avoid squish
+            const dummyData = Array(globalThis.max_index).fill(globalThis.WF_ZMIN - 1)
+            globalThis.wfZ = []
+            globalThis.wfY = []
+            for (let i = 0; i < globalThis.WF_MAX_ROWS - 1; i++) {
+                globalThis.wfZ.push(dummyData);
+                globalThis.wfY.push(globalThis.wfRow++);
+            }
+
            globalThis.analyserUpdate = setInterval(() => {
                 const buf = new Float32Array(globalThis.bufferLength);
                 analyser.getFloatFrequencyData(buf);
@@ -1035,6 +1070,8 @@ globalThis.startAudio = async function (constraint) {
                 const row = Array.from(buf.slice(0, globalThis.max_index), v =>
                     Number.isFinite(v) ? v : (globalThis.WF_ZMIN - 1)
                 );
+
+                console.log(row.length + " - " + globalThis.max_index )
 
                 // 2) Puffer pflegen
                 globalThis.wfZ.push(row);
@@ -1140,6 +1177,16 @@ globalThis.startAudio = async function (constraint) {
             if (globalThis.analyserUpdate) {
                 clearInterval(globalThis.analyserUpdate)
             }
+
+            //Setup arrays to a full buffer to avoid squish
+            const dummyData = Array(globalThis.max_index).fill(globalThis.WF_ZMIN - 1)
+            globalThis.wfZ = []
+            globalThis.wfY = []
+            for (let i = 0; i < globalThis.WF_MAX_ROWS - 1; i++) {
+                globalThis.wfZ.push(dummyData);
+                globalThis.wfY.push(globalThis.wfRow++);
+            }
+
             globalThis.analyserUpdate = setInterval(() => {
                 const buf = new Float32Array(globalThis.bufferLength);
                 analyser.getFloatFrequencyData(buf);

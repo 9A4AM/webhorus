@@ -15,7 +15,7 @@ globalThis.updateZScaleFromBuffer = function() {
   const sorted = [...flat].filter(Number.isFinite).sort((a,b)=>a-b);
   const p = q => sorted[Math.floor(q * (sorted.length - 1))];                  
   const p95 = p(0.95);                    
-  const zmin = p95 - 10;
+  const zmin = p95 - 15;
   const zmax = p95 + 2;
 
   globalThis.Plotly.restyle('spectrum', { zmin: [zmin], zmax: [zmax] }, [0]);
@@ -212,6 +212,9 @@ function start_wenet() {
                
                 globalThis.set_worker_fft_rate()
 
+                globalThis.wfZ = []
+                globalThis.wfY = []
+
                 globalThis.worker.postMessage({
                     "config": {
                         "rs232_framing": rs232_frame,
@@ -256,6 +259,15 @@ function start_wenet() {
                 const N = fft.length;
                 const sr = getSampleRate(); // 921416 or 960000
                 const binHz = sr / 2 / N;
+
+                //Setup arrays to a full buffer to avoid squish
+                if (globalThis.wfZ.length < globalThis.WF_MAX_ROWS) {
+                    const dummyData = Array(N).fill(globalThis.WF_ZMIN - 1)
+                    for (let i = 0; i < globalThis.WF_MAX_ROWS - 1; i++) {
+                        globalThis.wfZ.push(dummyData);
+                        globalThis.wfY.push(globalThis.wfRow++);
+                    }
+                }
 
                 const xLine = Array.from({length: N}, (_, i) =>
                     (i * binHz + rtl.getFrequency()) / 1e6
@@ -303,16 +315,16 @@ function start_wenet() {
                 globalThis.spectrum_layout.annotations = event.data.args.map(
                     (x) => {
                         return {
-                            x: (x + rtl.getFrequency()) / 1000 / 1000,
-                            y: 0,
+                            x: (x + rtl.getFrequency()) / 1e6,
+                            y: 0.8,
                             yref: "paper",
-                            ayref: "paper",
                             ay: 1000,
+                            ayref: "paper",
+                            ax: (x + rtl.getFrequency()) / 1e6,
                             showarrow: true,
-                            arrowside: "none",
-                            arrowwidth: 3,
-                            arrowcolor: "cyan"
-
+                            arrowhead: 2,
+                            arrowsize: 2,       
+                            arrowcolor: "white"
                         }
                     }
                 )
