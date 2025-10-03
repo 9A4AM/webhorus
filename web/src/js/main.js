@@ -25,7 +25,11 @@ const rtl_offset = -3000; // we offset the dial frequency by this much so we can
 const rtl_freq_est_lower = 1000;
 const rtl_freq_est_upper = 5000;
 
-
+globalThis.WF_MAX_ROWS = 120;
+globalThis.WF_ZMIN = -60;
+globalThis.wfZ = [];
+globalThis.wfY = [];
+globalThis.wfRow = 0;
 
 const fftSize = 16384
 
@@ -107,6 +111,7 @@ globalThis.saveSettings = function () {
         localStorage.setItem("uploader_lat", document.getElementById("uploader_lat").value)
         localStorage.setItem("uploader_lon", document.getElementById("uploader_lon").value)
         localStorage.setItem("uploader_alt", document.getElementById("uploader_alt").value)
+        localStorage.setItem("fft_rate", document.getElementById("fft_rate").value)
         localStorage.setItem("upload_sondehub", document.getElementById("upload_sondehub").checked)
         localStorage.setItem("uploader_position", document.getElementById("uploader_position").checked)
         localStorage.setItem("rtlbiast", document.getElementById("rtlbiast").checked)
@@ -121,6 +126,9 @@ globalThis.saveSettings = function () {
         localStorage.setItem("baud", document.getElementById("baud").value)
         log_entry(`Saved settings`, "light")
         report_position()
+
+        // send current fft rate to worker
+        globalThis.set_worker_fft_rate()
     }
 }
 
@@ -149,6 +157,9 @@ globalThis.loadSettings = function () {
     if (localStorage.getItem("uploader_alt")) { 
         document.getElementById("uploader_alt").value = localStorage.getItem("uploader_alt") 
         document.getElementById("wizard_uploader_alt").value = localStorage.getItem("uploader_alt")
+    }
+    if (localStorage.getItem("fft_rate")) { 
+        document.getElementById("fft_rate").value = localStorage.getItem("fft_rate")
     }
     if (localStorage.getItem("upload_sondehub")) { document.getElementById("upload_sondehub").checked = (localStorage.getItem("upload_sondehub") == 'true') }
     if (localStorage.getItem("uploader_position")) { document.getElementById("uploader_position").checked = (localStorage.getItem("uploader_position") == 'true') }
@@ -448,37 +459,59 @@ globalThis.Plotly.newPlot('snr', [{
 }, { responsive: true, staticPlot: true });
 
 globalThis.spectrum_layout = {
-    autosize: true,
-    margin: {
-        l: 20,
-        r: 0,
-        b: 30,
-        t: 5,
-        pad: 0
-    },
-    title: {
-        text: 'Spectrum (dB)',
-        font: {
-            size: "12"
-        },
-        yref: "paper",
-        yanchor: "top",
-    },
-    yaxis: {
-        //  type: 'log',
-        tickfont: {
-            size: "9"
-        },
-        autorangeoptions: {
-        }
-    }
+  autosize: true,
+  margin: { l: 40, r: 40, b: 40, t: 20, pad: 0 },
+  xaxis: {
+    title: 'Frequency [Hz]',
+    tickfont: { size: 12 }
+  },
+  yaxis: {
+    title: 'Time',
+    autorange: 'reversed',
+    tickfont: { size: 12 }
+  }
+};
 
-}
-globalThis.Plotly.newPlot('spectrum', [{
-    y: [],
-    x: [],
-    mode: 'lines'
-}], globalThis.spectrum_layout, { responsive: true, staticPlot: true });
+const turboColorscale = [
+  [0.0,   '#30123b'],
+  [0.1,   '#4145ab'],
+  [0.2,   '#4673e0'],
+  [0.3,   '#34a6dd'],
+  [0.4,   '#1ed5b6'],
+  [0.5,   '#32f17e'],
+  [0.6,   '#90f539'],
+  [0.7,   '#e4e61a'],
+  [0.8,   '#fcb414'],
+  [0.9,   '#f4630a'],
+  [1.0,   '#b21b0a']
+];
+
+const traceWaterfall = {
+  type: 'heatmap',
+  x: [], y: [], z: [],
+  colorscale: turboColorscale,
+  showscale: true,
+  xaxis: 'x2',
+  yaxis: 'y2',
+  zauto: false,
+  zsmooth: false
+};
+
+globalThis.spectrum_layout.xaxis = {
+  showticklabels: false,
+  showgrid: false,
+  zeroline: false,
+  title: ''
+};
+
+globalThis.spectrum_layout.yaxis = {
+  autorange: true,
+  showticklabels: false,
+  showgrid: false,
+  zeroline: false
+};
+
+globalThis.Plotly.newPlot('spectrum', [traceWaterfall], globalThis.spectrum_layout, { responsive: true, staticPlot: true });
 
 globalThis.Plotly.newPlot('plots', [], {
     autosize: true,
@@ -506,34 +539,45 @@ globalThis.updateStats = function (stats) {
         if (document.getElementById("radioRTL").checked) {
             x = rtl_offset + x
         }
+
         return {
             x: x,
-            y: 0,
+            y: 0.8,
             yref: "paper",
-            ayref: "paper",
             ay: 1000,
+            ayref: "paper",
             showarrow: true,
-            arrowside: "none",
-            arrowwidth: 0.5,
-            arrowcolor: "grey"
-
+            arrowhead: 2,
+            arrowsize: 2, 
+            arrowcolor: "white"
         }
+
     })
 
     if (document.getElementById("radioRTL").checked) {
         globalThis.spectrum_layout.shapes = [
             {
                 type: 'rect',
-                // x-reference is assigned to the x-values
-                xref: 'x',
-                // y-reference is assigned to the plot paper [0,1]
                 yref: 'paper',
-                x0: rtl_freq_est_lower + rtl_offset,
+                x0: rtl_offset,
                 y0: 0,
-                x1: rtl_freq_est_upper + rtl_offset,
+                x1: rtl_freq_est_lower + rtl_offset,
                 y1: 1,
                 fillcolor: '#d3d3d3',
-                opacity: 0.2,
+                opacity: 0.5,
+                line: {
+                    width: 0
+                }
+            },
+            {
+                type: 'rect',
+                yref: 'paper',
+                x0: rtl_freq_est_upper + rtl_offset,
+                y0: 0,
+                x1: rtl_offset * -1,
+                y1: 1,
+                fillcolor: '#d3d3d3',
+                opacity: 0.5,
                 line: {
                     width: 0
                 }
@@ -1009,17 +1053,44 @@ globalThis.startAudio = async function (constraint) {
             if (globalThis.analyserUpdate) {
                 clearInterval(globalThis.analyserUpdate)
             }
-            globalThis.analyserUpdate = setInterval(() => {
-                const freqData = new Float32Array(globalThis.bufferLength);
-                analyser.getFloatFrequencyData(freqData);
-                const spectrum_data = {
-                    y: [freqData.slice(0, globalThis.max_index)],
-                    x: [globalThis.filtered_x_values]
-                };
-                globalThis.Plotly.update('spectrum',
-                    spectrum_data,
-                    globalThis.spectrum_layout)
-            }, 200)
+
+            //Setup arrays to a full buffer to avoid squish
+            const dummyData = Array(globalThis.max_index).fill(globalThis.WF_ZMIN - 1)
+            globalThis.wfZ = []
+            globalThis.wfY = []
+            for (let i = 0; i < globalThis.WF_MAX_ROWS - 1; i++) {
+                globalThis.wfZ.push(dummyData);
+                globalThis.wfY.push(globalThis.wfRow++);
+            }
+
+           globalThis.analyserUpdate = setInterval(() => {
+                const buf = new Float32Array(globalThis.bufferLength);
+                analyser.getFloatFrequencyData(buf);
+
+                const row = Array.from(buf.slice(0, globalThis.max_index), v =>
+                    Number.isFinite(v) ? v : (globalThis.WF_ZMIN - 1)
+                );
+
+                console.log(row.length + " - " + globalThis.max_index )
+
+                // 2) Puffer pflegen
+                globalThis.wfZ.push(row);
+                globalThis.wfY.push(globalThis.wfRow++);
+                if (globalThis.wfZ.length > globalThis.WF_MAX_ROWS) {
+                    globalThis.wfZ.shift();
+                    globalThis.wfY.shift();
+                }
+
+                globalThis.updateZScaleFromBuffer()
+
+                globalThis.Plotly.restyle('spectrum', {
+                    x: [globalThis.filtered_x_values],
+                    y: [globalThis.wfY],
+                    z: [globalThis.wfZ],
+                }, [0]);
+
+                console.log("wfZ: "+globalThis.wfZ.length)
+            }, 200);
             log_entry(`FFT Started`, "light")
 
 
@@ -1106,17 +1177,41 @@ globalThis.startAudio = async function (constraint) {
             if (globalThis.analyserUpdate) {
                 clearInterval(globalThis.analyserUpdate)
             }
+
+            //Setup arrays to a full buffer to avoid squish
+            const dummyData = Array(globalThis.max_index).fill(globalThis.WF_ZMIN - 1)
+            globalThis.wfZ = []
+            globalThis.wfY = []
+            for (let i = 0; i < globalThis.WF_MAX_ROWS - 1; i++) {
+                globalThis.wfZ.push(dummyData);
+                globalThis.wfY.push(globalThis.wfRow++);
+            }
+
             globalThis.analyserUpdate = setInterval(() => {
-                const freqData = new Float32Array(globalThis.bufferLength);
-                analyser.getFloatFrequencyData(freqData);
-                const spectrum_data = {
-                    y: [freqData.slice(0, globalThis.max_index)],
-                    x: [globalThis.filtered_x_values]
-                };
-                globalThis.Plotly.update('spectrum',
-                    spectrum_data,
-                    globalThis.spectrum_layout)
-            }, 200)
+                const buf = new Float32Array(globalThis.bufferLength);
+                analyser.getFloatFrequencyData(buf);
+
+                const row = Array.from(buf.slice(0, globalThis.max_index), v =>
+                    Number.isFinite(v) ? v : (globalThis.WF_ZMIN - 1)
+                );
+
+                globalThis.wfZ.push(row);
+                globalThis.wfY.push(globalThis.wfRow++);
+                if (globalThis.wfZ.length > globalThis.WF_MAX_ROWS) {
+                    globalThis.wfZ.shift();
+                    globalThis.wfY.shift();
+                }
+
+                globalThis.updateZScaleFromBuffer()
+
+                globalThis.Plotly.restyle('spectrum', {
+                    x: [globalThis.filtered_x_values],
+                    y: [globalThis.wfY],
+                    z: [globalThis.wfZ],
+                }, [0]);
+
+                console.log("wfZ: "+globalThis.wfZ.length)
+            }, 200);
             log_entry(`FFT Started`, "light")
 
 
@@ -1124,6 +1219,17 @@ globalThis.startAudio = async function (constraint) {
         }
     }
 };
+
+globalThis.set_worker_fft_rate = function() {
+    if (globalThis.worker){
+        // send current fft rate to worker
+        const val = parseInt(document.getElementById("fft_rate").value, 10);
+        if (isFinite(val) && val > 50) {
+            globalThis.worker.postMessage({ type: "setInterval", interval: val });
+            console.log("FFT interval updated to", val, "ms");
+        }
+    }
+}
 
 function report_position() {
     const lat = parseFloat(document.getElementById("uploader_lat").value)

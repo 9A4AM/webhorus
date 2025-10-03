@@ -10,6 +10,17 @@ var last_callsign;
 
 var latency = 0;
 
+globalThis.updateZScaleFromBuffer = function() {
+  const flat = globalThis.wfZ.flat();
+  const sorted = [...flat].filter(Number.isFinite).sort((a,b)=>a-b);
+  const p = q => sorted[Math.floor(q * (sorted.length - 1))];                  
+  const p95 = p(0.95);                    
+  const zmin = p95 - 15;
+  const zmax = p95 + 2;
+
+  globalThis.Plotly.restyle('spectrum', { zmin: [zmin], zmax: [zmax] }, [0]);
+}
+
 function updatePlotsWenet(data) {
     var axis_ids = []
     var plot_data = []
@@ -199,7 +210,10 @@ function start_wenet() {
             if (event.data.type == "start") {
                 console.log("wenet worker loaded - sending config")
                
-                
+                globalThis.set_worker_fft_rate()
+
+                globalThis.wfZ = []
+                globalThis.wfY = []
 
                 globalThis.worker.postMessage({
                     "config": {
@@ -241,15 +255,42 @@ function start_wenet() {
                 return
             }
             if (event.data.type == "fft") {
-                const fft = event.data.fft
-                const spectrum_data = {
-                    y: [fft], 
-                    x: [[...Array(fft.length).keys()].map(x => ((x * (getSampleRate() / 2 / fft.length)) + (rtl.getFrequency())) / 1000 / 1000)]
-                };
-                globalThis.Plotly.update('spectrum',
-                    spectrum_data, globalThis.spectrum_layout
-                )
-                return
+                const fft = event.data.fft;
+                const N = fft.length;
+                const sr = getSampleRate(); // 921416 or 960000
+                const binHz = sr / 2 / N;
+
+                //Setup arrays to a full buffer to avoid squish
+                if (globalThis.wfZ.length < globalThis.WF_MAX_ROWS) {
+                    const dummyData = Array(N).fill(globalThis.WF_ZMIN - 1)
+                    for (let i = 0; i < globalThis.WF_MAX_ROWS - 1; i++) {
+                        globalThis.wfZ.push(dummyData);
+                        globalThis.wfY.push(globalThis.wfRow++);
+                    }
+                }
+
+                const xLine = Array.from({length: N}, (_, i) =>
+                    (i * binHz + rtl.getFrequency()) / 1e6
+                );
+
+                const row = fft.map(v => (Number.isFinite(v) ? v : globalThis.WF_ZMIN - 1));
+                globalThis.wfZ.push(row);
+                globalThis.wfY.push(globalThis.wfRow++);
+
+                globalThis.updateZScaleFromBuffer();
+
+                if (globalThis.wfZ.length > globalThis.WF_MAX_ROWS) {
+                    globalThis.wfZ.shift();
+                    globalThis.wfY.shift();
+                }
+
+                globalThis.Plotly.restyle('spectrum', {
+                x: [xLine],
+                y: [globalThis.wfY],   // timeline
+                z: [globalThis.wfZ]    // matrix
+                }, [0]);
+
+                return;
             }
             if (event.data.type == "time") {
                 latency = new Date() - event.data.time
@@ -274,16 +315,16 @@ function start_wenet() {
                 globalThis.spectrum_layout.annotations = event.data.args.map(
                     (x) => {
                         return {
-                            x: (x + rtl.getFrequency()) / 1000 / 1000,
-                            y: 0,
+                            x: (x + rtl.getFrequency()) / 1e6,
+                            y: 0.8,
                             yref: "paper",
-                            ayref: "paper",
                             ay: 1000,
+                            ayref: "paper",
+                            ax: (x + rtl.getFrequency()) / 1e6,
                             showarrow: true,
-                            arrowside: "none",
-                            arrowwidth: 0.5,
-                            arrowcolor: "grey"
-
+                            arrowhead: 2,
+                            arrowsize: 2,       
+                            arrowcolor: "white"
                         }
                     }
                 )
