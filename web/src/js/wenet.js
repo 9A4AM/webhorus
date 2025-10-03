@@ -10,16 +10,6 @@ var last_callsign;
 
 var latency = 0;
 
-globalThis.updateZScaleFromBuffer = function() {
-  const flat = globalThis.wfZ.flat();
-  const sorted = [...flat].filter(Number.isFinite).sort((a,b)=>a-b);
-  const p = q => sorted[Math.floor(q * (sorted.length - 1))];                  
-  const p95 = p(0.95);                    
-  const zmin = p95 - 15;
-  const zmax = p95 + 2;
-
-  globalThis.Plotly.restyle('spectrum', { zmin: [zmin], zmax: [zmax] }, [0]);
-}
 
 function updatePlotsWenet(data) {
     var axis_ids = []
@@ -269,7 +259,7 @@ function start_wenet() {
                     }
                 }
 
-                const xLine = Array.from({length: N}, (_, i) =>
+                globalThis.filtered_x_values = Array.from({length: N}, (_, i) =>
                     (i * binHz + rtl.getFrequency()) / 1e6
                 );
 
@@ -277,18 +267,14 @@ function start_wenet() {
                 globalThis.wfZ.push(row);
                 globalThis.wfY.push(globalThis.wfRow++);
 
-                globalThis.updateZScaleFromBuffer();
+                
 
                 if (globalThis.wfZ.length > globalThis.WF_MAX_ROWS) {
                     globalThis.wfZ.shift();
                     globalThis.wfY.shift();
                 }
 
-                globalThis.Plotly.restyle('spectrum', {
-                x: [xLine],
-                y: [globalThis.wfY],   // timeline
-                z: [globalThis.wfZ]    // matrix
-                }, [0]);
+                globalThis.updateZScaleFromBuffer();
 
                 return;
             }
@@ -316,15 +302,15 @@ function start_wenet() {
                     (x) => {
                         return {
                             x: (x + rtl.getFrequency()) / 1e6,
-                            y: 0.8,
+                            y: 1,
                             yref: "paper",
-                            ay: 1000,
+                            ay: 1.3,
                             ayref: "paper",
-                            ax: (x + rtl.getFrequency()) / 1e6,
+                            ax: 1,
                             showarrow: true,
                             arrowhead: 2,
-                            arrowsize: 2,       
-                            arrowcolor: "white"
+                            arrowsize: 1,       
+                            arrowcolor: "black"
                         }
                     }
                 )

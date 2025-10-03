@@ -25,8 +25,8 @@ const rtl_offset = -3000; // we offset the dial frequency by this much so we can
 const rtl_freq_est_lower = 1000;
 const rtl_freq_est_upper = 5000;
 
-globalThis.WF_MAX_ROWS = 120;
-globalThis.WF_ZMIN = -60;
+globalThis.WF_MAX_ROWS = 50;
+globalThis.WF_ZMIN = -150;
 globalThis.wfZ = [];
 globalThis.wfY = [];
 globalThis.wfRow = 0;
@@ -494,7 +494,12 @@ const traceWaterfall = {
   xaxis: 'x2',
   yaxis: 'y2',
   zauto: false,
-  zsmooth: false
+  zsmooth: false,
+  colorbar: {
+    orientation: "h",
+    nticks: 5,
+    thickness: 5
+  }
 };
 
 globalThis.spectrum_layout.xaxis = {
@@ -542,14 +547,15 @@ globalThis.updateStats = function (stats) {
 
         return {
             x: x,
-            y: 0.8,
+            y: 1,
             yref: "paper",
-            ay: 1000,
+            ay: 1.3,
+            ax: 1,
             ayref: "paper",
             showarrow: true,
             arrowhead: 2,
-            arrowsize: 2, 
-            arrowcolor: "white"
+            arrowsize: 1, 
+            arrowcolor: "black"
         }
 
     })
@@ -639,7 +645,7 @@ async function init_python() {
         globalThis.pyodide.loadPackage("./assets/six-1.16.0-py2.py3-none-any.whl"),
         globalThis.pyodide.loadPackage("./assets/urllib3-2.2.3-py3-none-any.whl"),
         globalThis.pyodide.loadPackage("./assets/certifi-2024.12.14-py3-none-any.whl"),
-        globalThis.pyodide.loadPackage("./assets/webhorus-0.1.4-cp312-cp312-pyodide_2024_0_wasm32.whl")
+        globalThis.pyodide.loadPackage("./assets/webhorus-0.2.0-cp312-cp312-pyodide_2024_0_wasm32.whl")
     ]);
     log_entry("Python packages loaded", "light")
     await globalThis.pyodide.runPythonAsync(`
@@ -1071,7 +1077,6 @@ globalThis.startAudio = async function (constraint) {
                     Number.isFinite(v) ? v : (globalThis.WF_ZMIN - 1)
                 );
 
-                console.log(row.length + " - " + globalThis.max_index )
 
                 // 2) Puffer pflegen
                 globalThis.wfZ.push(row);
@@ -1083,14 +1088,8 @@ globalThis.startAudio = async function (constraint) {
 
                 globalThis.updateZScaleFromBuffer()
 
-                globalThis.Plotly.restyle('spectrum', {
-                    x: [globalThis.filtered_x_values],
-                    y: [globalThis.wfY],
-                    z: [globalThis.wfZ],
-                }, [0]);
 
-                console.log("wfZ: "+globalThis.wfZ.length)
-            }, 200);
+            }, 500);
             log_entry(`FFT Started`, "light")
 
 
@@ -1204,18 +1203,9 @@ globalThis.startAudio = async function (constraint) {
 
                 globalThis.updateZScaleFromBuffer()
 
-                globalThis.Plotly.restyle('spectrum', {
-                    x: [globalThis.filtered_x_values],
-                    y: [globalThis.wfY],
-                    z: [globalThis.wfZ],
-                }, [0]);
 
-                console.log("wfZ: "+globalThis.wfZ.length)
-            }, 200);
+            }, 500);
             log_entry(`FFT Started`, "light")
-
-
-
         }
     }
 };
@@ -1285,14 +1275,6 @@ globalThis.log_entry = function (message, level) {
     log_entry.prepend(_date)
     rx_log.prepend(log_entry)
 }
-
-// plotly auto resize fix
-setInterval(() => {
-    globalThis.Plotly.update("spectrum")
-    globalThis.Plotly.update("snr")
-    globalThis.Plotly.update("plots")
-}, 150)
-
 
 globalThis.toggleBigImage = function (img) {
     if (this.tagName == "IMG"){
@@ -1552,6 +1534,23 @@ globalThis.getWizardSoundDevices = function(){
         snd_li.classList.add("dropdown-item")
         document.getElementById("wizard_sound_devices").appendChild(snd_li)
     })
+}
+
+globalThis.updateZScaleFromBuffer = function() {
+  const flat = globalThis.wfZ.flat();
+  const sorted = [...flat].filter(Number.isFinite).sort((a,b)=>a-b);
+  const p = q => sorted[Math.floor(q * (sorted.length - 1))];                  
+  const p95 = p(0.95);                    
+  const zmin = p95 - 15;
+  const zmax = p95 + 2;
+
+  globalThis.Plotly.restyle('spectrum', { 
+        zmin: [zmin], 
+        zmax: [zmax],
+        x: [globalThis.filtered_x_values],
+        y: [globalThis.wfY],
+        z: [globalThis.wfZ],
+    }, [0]);
 }
 
 
