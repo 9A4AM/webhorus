@@ -1009,6 +1009,17 @@ globalThis.startAudio = async function (constraint) {
             globalThis.usbDemod.andThen(new dbfsCalc()),
             rtl_sdr_rate, // sample rate
         )
+
+        globalThis.Radio.addEventListener("radio", (e) => {
+            if(e.detail.exception){
+                document.getElementById("audio_start").removeAttribute("disabled");
+                document.getElementById("audio_start").classList.remove("btn-outline-success")
+                document.getElementById("audio_start").innerText = "Start"
+                document.getElementById("alert").textContent = e.detail.exception
+            };
+            console.log(e.detail.exception);console.log(e);
+        });
+
         globalThis.Radio.setSampleRate(rtl_sdr_rate)
 
         globalThis.Radio.start()

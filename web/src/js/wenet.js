@@ -281,12 +281,16 @@ function start_wenet() {
             if (event.data.type == "time") {
                 latency = new Date() - event.data.time
                 document.getElementById("wenet_latency").innerText = latency + " ms"
+                const drop_message = "Can't keep up; Dropping samples";
                 if (latency > 1000) {
                     document.getElementById("wenet_latency").style.color = "red"
-                    document.getElementById("alert").textContent = "Can't keep up; Dropping samples"
+                    document.getElementById("alert").textContent = drop_message
                 } else {
                     document.getElementById("wenet_latency").style.color = "black"
-                    document.getElementById("alert").textContent = ""
+                    if (document.getElementById("alert").textContent == "Can't keep up; Dropping samples"){
+                        document.getElementById("alert").textContent = ""
+                    }
+                    
                 }
 
                 if (event.data.time.getTime() == last_sent.getTime()) {
@@ -408,6 +412,12 @@ function start_wenet() {
     )
 
     rtl.addEventListener("radio", (e) => {
+        if(e.detail.exception){
+            document.getElementById("audio_start").removeAttribute("disabled");
+            document.getElementById("audio_start").classList.remove("btn-outline-success")
+            document.getElementById("audio_start").innerText = "Start"
+            document.getElementById("alert").textContent = e.detail.exception
+        };
         console.log(e.detail.exception);console.log(e);
     });
 
