@@ -6,12 +6,13 @@ import datetime
 from webhorus import demod
 from horusdemodlib.decoder import decode_packet
 from horusdemodlib.utils import telem_to_sondehub, fix_datetime
+from importlib.metadata import version
 
 import logging
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
 
-VERSION = "0.2.0"
+VERSION = version('webhorus')
 
 buffer = b''
 
